@@ -7,7 +7,7 @@ export function middleware(req: NextRequest) {
 
   if (pathname === "/") {
     if (adminCookie) return NextResponse.redirect(new URL("/admin", req.url));
-    if (userCookie) return NextResponse.redirect(new URL("/solicitar", req.url));
+    if (userCookie) return NextResponse.redirect(new URL("/dashboard", req.url));
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname === "/solicitar" || pathname === "/minhas-solicitacoes") {
+  if (pathname === "/dashboard" || pathname === "/solicitar" || pathname === "/minhas-solicitacoes") {
     if (!userCookie) return NextResponse.redirect(new URL("/login", req.url));
     return NextResponse.next();
   }

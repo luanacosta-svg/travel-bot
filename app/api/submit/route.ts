@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       status: "pending",
       requester: {
         name: body.name,
-        email: body.email,
+        email: body.email?.trim().toLowerCase(),
         phone: body.phone || undefined,
       },
       travel: {

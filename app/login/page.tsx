@@ -38,7 +38,7 @@ function LoginForm() {
     setLoading(false);
 
     if (!res.ok) { setError(data.error); return; }
-    router.push(mode === "admin" ? "/admin" : "/solicitar");
+    router.push(mode === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
 
