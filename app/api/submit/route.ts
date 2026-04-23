@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
     }
 
     saveRequest(request);
-    await sendNewRequestNotification(request);
+
+    // Email is best-effort — don't fail the request if not configured yet
+    sendNewRequestNotification(request).catch((err) =>
+      console.error("Email notification failed:", err)
+    );
 
     return NextResponse.json({ success: true, id: request.id });
   } catch (err) {
