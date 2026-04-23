@@ -1,0 +1,18 @@
+{
+  "name": "49 Educação · Viagens",
+  "short_name": "Viagens 49",
+  "description": "Sistema de solicitação de viagens, reembolsos e notas fiscais",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import StatusBadge from "@/components/StatusBadge";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload, UserSession } from "@/types";
@@ -42,11 +42,18 @@ export default function DashboardPage() {
   const pendingInv = invoices.filter((i) => i.status === "pending").length;
   const totalPending = pendingTravels + pendingReimb + pendingInv;
 
-  const recentAll = [
+  const [activityFilter, setActivityFilter] = useState<"all" | "travel" | "reimb" | "inv">("all");
+
+  const allItems = useMemo(() => [
     ...travels.map((r) => ({ id: r.id, type: "travel" as const, icon: "✈", title: `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`, date: r.createdAt, status: r.status as string, extra: undefined as string | undefined })),
     ...reimbursements.map((r) => ({ id: r.id, type: "reimb" as const, icon: "💸", title: r.expense.description, date: r.createdAt, status: r.status as string, extra: formatCurrency(r.expense.amount) })),
     ...invoices.map((i) => ({ id: i.id, type: "inv" as const, icon: "🧾", title: i.invoice.description, date: i.createdAt, status: i.status as string, extra: formatCurrency(i.invoice.amount) })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [travels, reimbursements, invoices]);
+
+  const recentAll = useMemo(() => {
+    const filtered = activityFilter === "all" ? allItems : allItems.filter((i) => i.type === activityFilter);
+    return filtered.slice(0, 8);
+  }, [allItems, activityFilter]);
 
   const statusLabel: Record<string, string> = {
     pending: "Em análise",
@@ -125,15 +132,39 @@ export default function DashboardPage() {
             </a>
           </div>
 
+          {/* Filtros */}
+          <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
+            {([
+              { key: "all", label: "Tudo", count: allItems.length },
+              { key: "travel", label: "✈ Viagens", count: travels.length },
+              { key: "reimb", label: "💸 Reembolsos", count: reimbursements.length },
+              { key: "inv", label: "🧾 Notas", count: invoices.length },
+            ] as const).map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setActivityFilter(f.key)}
+                className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${activityFilter === f.key ? "bg-orange-500 text-white border-orange-500" : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"}`}
+              >
+                {f.label}{f.count > 0 && ` (${f.count})`}
+              </button>
+            ))}
+          </div>
+
           {loading && <p className="text-slate-400 text-sm">Carregando...</p>}
 
-          {!loading && recentAll.length === 0 && (
+          {!loading && allItems.length === 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
               <p className="text-3xl mb-2">📋</p>
               <p className="text-slate-500 text-sm mb-4">Nenhuma solicitação ainda.</p>
               <a href="/solicitar" className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
                 Começar agora
               </a>
+            </div>
+          )}
+
+          {!loading && allItems.length > 0 && recentAll.length === 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center">
+              <p className="text-slate-400 text-sm">Nenhum item nessa categoria.</p>
             </div>
           )}
 
