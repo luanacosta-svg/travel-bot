@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const totalPending = pendingTravels + pendingReimb + pendingInv;
 
   const recentAll = [
-    ...travels.map((r) => ({ id: r.id, type: "travel" as const, icon: "✈", title: `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`, date: r.createdAt, status: r.status as string })),
+    ...travels.map((r) => ({ id: r.id, type: "travel" as const, icon: "✈", title: `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`, date: r.createdAt, status: r.status as string, extra: undefined as string | undefined })),
     ...reimbursements.map((r) => ({ id: r.id, type: "reimb" as const, icon: "💸", title: r.expense.description, date: r.createdAt, status: r.status as string, extra: formatCurrency(r.expense.amount) })),
     ...invoices.map((i) => ({ id: i.id, type: "inv" as const, icon: "🧾", title: i.invoice.description, date: i.createdAt, status: i.status as string, extra: formatCurrency(i.invoice.amount) })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
