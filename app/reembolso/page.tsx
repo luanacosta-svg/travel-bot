@@ -32,8 +32,8 @@ export default function ReembolsoPage() {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
   }, []);
 
-  function updateItem(id: number, field: keyof ExpenseItem, value: string | File | null) {
-    setItems((prev) => prev.map((item) => item.id === id ? { ...item, [field]: value } : item));
+  function updateItem(id: number, updates: Partial<ExpenseItem>) {
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, ...updates } : item));
   }
 
   function addItem() {
@@ -102,7 +102,7 @@ export default function ReembolsoPage() {
                     <input
                       required
                       value={item.description}
-                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                      onChange={(e) => updateItem(item.id, { description: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="Ex: Almoço com cliente, Uber..."
                     />
@@ -119,8 +119,7 @@ export default function ReembolsoPage() {
                         className="hidden"
                         onChange={(e) => {
                           const f = e.target.files?.[0] ?? null;
-                          updateItem(item.id, "file", f);
-                          updateItem(item.id, "fileName", f?.name ?? "");
+                          updateItem(item.id, { file: f, fileName: f?.name ?? "" });
                         }}
                       />
                       <span className="text-lg leading-none">{item.fileName ? "📎" : "📤"}</span>
@@ -138,7 +137,7 @@ export default function ReembolsoPage() {
                     <select
                       required
                       value={item.category}
-                      onChange={(e) => updateItem(item.id, "category", e.target.value)}
+                      onChange={(e) => updateItem(item.id, { category: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                     >
                       {CATEGORIES.map((c) => (
@@ -152,7 +151,7 @@ export default function ReembolsoPage() {
                       type="date"
                       required
                       value={item.date}
-                      onChange={(e) => updateItem(item.id, "date", e.target.value)}
+                      onChange={(e) => updateItem(item.id, { date: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
@@ -164,7 +163,7 @@ export default function ReembolsoPage() {
                       min="0.01"
                       required
                       value={item.amount}
-                      onChange={(e) => updateItem(item.id, "amount", e.target.value)}
+                      onChange={(e) => updateItem(item.id, { amount: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="0,00"
                     />

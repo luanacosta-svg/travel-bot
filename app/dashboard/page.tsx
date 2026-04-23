@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
-import StatusBadge from "@/components/StatusBadge";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload, UserSession } from "@/types";
 
 function formatDate(iso: string) {

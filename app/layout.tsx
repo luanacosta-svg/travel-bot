@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Viagens 49",
   },
+  icons: {
+    apple: "/logo-49.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -21,9 +24,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <head>
-        <link rel="apple-touch-icon" href="/logo-49.png" />
-      </head>
       <body className="min-h-screen bg-slate-50 text-slate-900">{children}</body>
     </html>
   );
