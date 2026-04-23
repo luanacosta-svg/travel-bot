@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import type { TravelRequest, FlightOption } from "@/types";
+import type { TravelRequest } from "@/types";
 
 function createTransport() {
   return nodemailer.createTransport({
@@ -11,70 +11,6 @@ function createTransport() {
       pass: process.env.GMAIL_APP_PASSWORD,
     },
   });
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "America/Sao_Paulo",
-  });
-}
-
-function formatPrice(price: string, currency: string): string {
-  const num = parseFloat(price);
-  return num.toLocaleString("pt-BR", { style: "currency", currency });
-}
-
-function flightCard(f: FlightOption, index: number): string {
-  const stopsLabel = f.stops === 0 ? "Direto" : `${f.stops} escala(s)`;
-  const returnBlock = f.returnFlight
-    ? `
-      <tr>
-        <td colspan="2" style="padding:8px 0 4px;font-weight:600;color:#1d4ed8;">✈ Volta</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 0;color:#555;">Saída</td>
-        <td style="padding:2px 0;">${f.returnFlight.departure.airport} — ${formatDate(f.returnFlight.departure.time)}</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 0;color:#555;">Chegada</td>
-        <td style="padding:2px 0;">${f.returnFlight.arrival.airport} — ${formatDate(f.returnFlight.arrival.time)}</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 0;color:#555;">Duração</td>
-        <td style="padding:2px 0;">${f.returnFlight.duration} · ${f.returnFlight.stops === 0 ? "Direto" : `${f.returnFlight.stops} escala(s)`}</td>
-      </tr>`
-    : "";
-
-  return `
-    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;background:#fff;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:16px;color:#1e293b;">Opção ${index + 1} · ${f.airline}</span>
-        <span style="font-weight:700;font-size:18px;color:#2563eb;">${formatPrice(f.price, f.currency)}</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr>
-          <td colspan="2" style="padding:4px 0 4px;font-weight:600;color:#1d4ed8;">✈ Ida</td>
-        </tr>
-        <tr>
-          <td style="padding:2px 0;color:#555;width:80px;">Saída</td>
-          <td style="padding:2px 0;">${f.departure.airport} — ${formatDate(f.departure.time)}</td>
-        </tr>
-        <tr>
-          <td style="padding:2px 0;color:#555;">Chegada</td>
-          <td style="padding:2px 0;">${f.arrival.airport} — ${formatDate(f.arrival.time)}</td>
-        </tr>
-        <tr>
-          <td style="padding:2px 0;color:#555;">Duração</td>
-          <td style="padding:2px 0;">${f.duration} · ${stopsLabel}</td>
-        </tr>
-        ${returnBlock}
-      </table>
-    </div>`;
 }
 
 function baseTemplate(title: string, body: string): string {
@@ -111,19 +47,18 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
   const { requester, travel } = req;
 
   const travelType =
-    travel.type === "flight"
-      ? "Passagem aérea"
-      : travel.type === "event"
-      ? "Ingresso"
-      : "Passagem + Ingresso";
+    travel.type === "flight" ? "Passagem aérea"
+    : travel.type === "event" ? "Ingresso"
+    : "Passagem + Ingresso";
 
-  const flightSection =
-    travel.type !== "event" && req.flightOptions && req.flightOptions.length > 0
-      ? `<h3 style="color:#1e293b;margin:24px 0 12px;">Opções de voo encontradas</h3>
-         ${req.flightOptions.map((f, i) => flightCard(f, i)).join("")}`
-      : travel.type !== "event"
-      ? `<p style="color:#ef4444;">Nenhum voo encontrado para essa rota/data. Verifique manualmente.</p>`
-      : "";
+  const flightButton = req.flightSearchUrl
+    ? `<div style="margin-top:20px;">
+        <a href="${req.flightSearchUrl}"
+           style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+          🔍 Ver voos no Google Flights
+        </a>
+       </div>`
+    : "";
 
   const eventSection =
     travel.type !== "flight" && travel.eventName
@@ -144,11 +79,11 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
       <p style="margin:0 0 8px;"><strong>Passageiros:</strong> ${travel.passengers}</p>
       ${travel.notes ? `<p style="margin:0;"><strong>Observações:</strong> ${travel.notes}</p>` : ""}
     </div>
-    ${flightSection}
     ${eventSection}
-    <div style="margin-top:24px;">
+    ${flightButton}
+    <div style="margin-top:16px;">
       <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
-         style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+         style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
         Abrir painel admin
       </a>
     </div>`;
@@ -163,36 +98,21 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
 
 export async function sendOptionsToRequester(
   req: TravelRequest,
-  selectedOptions: FlightOption[],
   managerMessage: string
 ): Promise<void> {
   const transport = createTransport();
 
-  const flightSection =
-    selectedOptions.length > 0
-      ? `<h3 style="color:#1e293b;margin:24px 0 12px;">Opções de voo sugeridas</h3>
-         ${selectedOptions.map((f, i) => flightCard(f, i)).join("")}`
-      : "";
-
-  const eventSection =
-    req.travel.type !== "flight" && req.travel.eventName
-      ? `<div style="background:#eff6ff;border-radius:8px;padding:16px;margin-top:16px;">
-           <strong>Evento:</strong> ${req.travel.eventName}
-         </div>`
-      : "";
-
   const body = `
     <p style="color:#374151;">Olá, <strong>${req.requester.name}</strong>!</p>
-    <p style="color:#374151;">Sua solicitação de viagem para <strong>${req.travel.destination}</strong> foi analisada. Confira as opções abaixo:</p>
+    <p style="color:#374151;">Sua solicitação de viagem para <strong>${req.travel.destination}</strong> foi analisada.</p>
     ${managerMessage ? `<div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;color:#374151;">${managerMessage}</div>` : ""}
-    ${flightSection}
-    ${eventSection}
+    ${req.travel.eventName ? `<div style="background:#eff6ff;border-radius:8px;padding:16px;margin-top:16px;"><strong>Evento:</strong> ${req.travel.eventName}</div>` : ""}
     <p style="color:#374151;margin-top:20px;">Em breve você receberá a confirmação da compra. Qualquer dúvida, entre em contato.</p>`;
 
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
-    subject: `Opções de viagem para ${req.travel.destination} ✈`,
-    html: baseTemplate(`Opções de viagem — ${req.travel.destination}`, body),
+    subject: `Sua solicitação de viagem — ${req.travel.destination} ✈`,
+    html: baseTemplate(`Atualização da sua viagem — ${req.travel.destination}`, body),
   });
 }

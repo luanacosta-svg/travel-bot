@@ -21,28 +21,5 @@ export interface TravelRequest {
     eventName?: string;
     notes?: string;
   };
-  flightOptions?: FlightOption[];
-}
-
-export interface FlightOption {
-  id: string;
-  price: string;
-  currency: string;
-  airline: string;
-  departure: {
-    airport: string;
-    time: string;
-  };
-  arrival: {
-    airport: string;
-    time: string;
-  };
-  duration: string;
-  stops: number;
-  returnFlight?: {
-    departure: { airport: string; time: string };
-    arrival: { airport: string; time: string };
-    duration: string;
-    stops: number;
-  };
+  flightSearchUrl?: string;
 }

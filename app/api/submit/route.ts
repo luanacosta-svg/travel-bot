@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { saveRequest } from "@/lib/store";
-import { searchFlights } from "@/lib/amadeus";
+import { buildGoogleFlightsUrl } from "@/lib/googleFlights";
 import { sendNewRequestNotification } from "@/lib/email";
 import type { TravelRequest } from "@/types";
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (body.type !== "event" && body.origin && body.destination && body.departureDate) {
-      request.flightOptions = await searchFlights(
+      request.flightSearchUrl = buildGoogleFlightsUrl(
         body.origin,
         body.destination,
         body.departureDate,
