@@ -2,7 +2,7 @@ import type { RequestStatus } from "@/types";
 
 const config: Record<RequestStatus, { label: string; className: string }> = {
   pending: { label: "Aguardando análise", className: "bg-amber-100 text-amber-800" },
-  options_sent: { label: "Opções enviadas", className: "bg-blue-100 text-blue-800" },
+  options_sent: { label: "Opções enviadas", className: "bg-orange-100 text-orange-700" },
   purchased: { label: "Comprado ✓", className: "bg-green-100 text-green-800" },
 };
 

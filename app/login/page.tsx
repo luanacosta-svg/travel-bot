@@ -43,7 +43,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -51,7 +51,7 @@ function LoginForm() {
             <span className="text-3xl">✈</span>
           </div>
           <h1 className="text-3xl font-bold text-white">49 Educação</h1>
-          <p className="text-blue-200 mt-1">Sistema de Viagens</p>
+          <p className="text-orange-200 mt-1">Sistema de Viagens</p>
         </div>
 
         {/* Card */}
@@ -92,7 +92,7 @@ function LoginForm() {
                     onChange={(e) => setName(e.target.value)}
                     required
                     placeholder="Seu nome"
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
                   />
                 </div>
                 <div>
@@ -105,7 +105,7 @@ function LoginForm() {
                     type="email"
                     required
                     placeholder="seu@49educacao.com.br"
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
                   />
                 </div>
               </>
@@ -120,7 +120,7 @@ function LoginForm() {
                   type="password"
                   required
                   placeholder="••••••••"
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
                 />
               </div>
             )}
@@ -134,7 +134,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition text-sm"
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 rounded-xl transition text-sm"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>

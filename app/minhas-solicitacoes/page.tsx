@@ -76,8 +76,8 @@ function RequestCard({ req }: { req: TravelRequest }) {
 
           {/* Mensagem do admin */}
           {req.managerMessage && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p className="text-xs font-semibold text-blue-600 mb-1">
+            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+              <p className="text-xs font-semibold text-orange-500 mb-1">
                 Resposta da equipe de compras
               </p>
               <p className="text-sm text-slate-700">{req.managerMessage}</p>
@@ -158,7 +158,7 @@ function MinhasSolicitacoesContent() {
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
               { label: "Pendentes", value: pending, color: "text-amber-600 bg-amber-50" },
-              { label: "Com opções", value: optionsSent, color: "text-blue-600 bg-blue-50" },
+              { label: "Com opções", value: optionsSent, color: "text-orange-500 bg-orange-50" },
               { label: "Compradas", value: purchased, color: "text-green-600 bg-green-50" },
             ].map((s) => (
               <div key={s.label} className={`rounded-2xl p-4 ${s.color}`}>
@@ -173,7 +173,7 @@ function MinhasSolicitacoesContent() {
           <h1 className="text-xl font-bold text-slate-800">Minhas solicitações</h1>
           <a
             href="/solicitar"
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
+            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
           >
             + Nova
           </a>
@@ -190,7 +190,7 @@ function MinhasSolicitacoesContent() {
             <p className="text-slate-400 text-sm mb-5">Clique em Nova para começar</p>
             <a
               href="/solicitar"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition inline-block"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition inline-block"
             >
               Fazer solicitação
             </a>

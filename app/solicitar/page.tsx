@@ -75,7 +75,7 @@ export default function SolicitarPage() {
                   onClick={() => setType(opt.value)}
                   className={`flex flex-col items-center gap-2 py-4 rounded-xl border-2 text-sm font-medium transition-all ${
                     type === opt.value
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
                       : "border-slate-200 text-slate-500 hover:border-slate-300"
                   }`}
                 >
@@ -98,7 +98,7 @@ export default function SolicitarPage() {
                   name="name"
                   required
                   defaultValue={user?.name ?? ""}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50"
                 />
               </div>
               <div>
@@ -108,7 +108,7 @@ export default function SolicitarPage() {
                   type="email"
                   required
                   defaultValue={user?.email ?? ""}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50"
                 />
               </div>
               <div>
@@ -117,7 +117,7 @@ export default function SolicitarPage() {
                 </label>
                 <input
                   name="phone"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="(11) 99999-9999"
                 />
               </div>
@@ -138,7 +138,7 @@ export default function SolicitarPage() {
                   <input
                     name="origin"
                     required={needsFlight}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: GRU, Guarulhos, SP"
                   />
                 </div>
@@ -149,7 +149,7 @@ export default function SolicitarPage() {
                   <input
                     name="destination"
                     required
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: BSB, Brasília, DF"
                   />
                 </div>
@@ -161,7 +161,7 @@ export default function SolicitarPage() {
                     name="departureDate"
                     type="date"
                     required={needsFlight}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export default function SolicitarPage() {
                   <input
                     name="returnDate"
                     type="date"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 <div>
@@ -180,7 +180,7 @@ export default function SolicitarPage() {
                   </label>
                   <input
                     name="preferredTimes"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: manhã, após 14h"
                   />
                 </div>
@@ -195,7 +195,7 @@ export default function SolicitarPage() {
                     max="9"
                     defaultValue="1"
                     required={needsFlight}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function SolicitarPage() {
                   <input
                     name="eventName"
                     required={needsEvent}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Nome completo do evento"
                   />
                 </div>
@@ -228,7 +228,7 @@ export default function SolicitarPage() {
                     <input
                       name="destination"
                       required
-                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="Ex: São Paulo"
                     />
                   </div>
@@ -245,7 +245,7 @@ export default function SolicitarPage() {
             <textarea
               name="notes"
               rows={3}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
               placeholder="Preferências, restrições alimentares, bagagem, necessidades especiais..."
             />
           </div>
@@ -259,7 +259,7 @@ export default function SolicitarPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3.5 rounded-xl transition text-sm"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3.5 rounded-xl transition text-sm"
           >
             {loading ? "Enviando..." : "Enviar solicitação"}
           </button>

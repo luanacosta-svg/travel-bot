@@ -22,7 +22,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
             <span className="text-white text-sm">✈</span>
           </div>
           <div>
@@ -52,8 +52,8 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
           )}
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-700 text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+              <span className="text-orange-600 text-xs font-bold">
                 {isAdmin ? "A" : user?.name?.[0]?.toUpperCase() ?? "?"}
               </span>
             </div>

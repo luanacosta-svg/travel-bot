@@ -51,14 +51,14 @@ export default function AdminPage() {
           {[
             { key: "all", label: "Total", color: "bg-slate-800 text-white" },
             { key: "pending", label: "Pendentes", color: "bg-amber-500 text-white" },
-            { key: "options_sent", label: "Com opções", color: "bg-blue-600 text-white" },
+            { key: "options_sent", label: "Com opções", color: "bg-orange-500 text-white" },
             { key: "purchased", label: "Compradas", color: "bg-green-600 text-white" },
           ].map((s) => (
             <button
               key={s.key}
               onClick={() => setFilter(s.key as typeof filter)}
               className={`rounded-2xl p-5 text-left transition-all ${s.color} ${
-                filter === s.key ? "ring-2 ring-offset-2 ring-slate-400 scale-[1.02]" : "opacity-90 hover:opacity-100"
+                filter === s.key ? "ring-2 ring-offset-2 ring-orange-300 scale-[1.02]" : "opacity-90 hover:opacity-100"
               }`}
             >
               <p className="text-3xl font-bold">{counts[s.key as keyof typeof counts]}</p>
@@ -74,7 +74,7 @@ export default function AdminPage() {
              filter === "pending" ? "Pendentes" :
              filter === "options_sent" ? "Com opções enviadas" : "Compradas"}
           </h2>
-          <button onClick={fetchRequests} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <button onClick={fetchRequests} className="text-sm text-orange-500 hover:text-orange-600 font-medium">
             Atualizar
           </button>
         </div>
@@ -93,7 +93,7 @@ export default function AdminPage() {
             <a
               key={req.id}
               href={`/admin/solicitacao/${req.id}`}
-              className="block bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md hover:border-blue-200 transition-all group"
+              className="block bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md hover:border-orange-200 transition-all group"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -119,7 +119,7 @@ export default function AdminPage() {
                     {" · "}{formatDate(req.createdAt)}
                   </p>
                 </div>
-                <span className="text-slate-300 group-hover:text-blue-400 transition mt-1">→</span>
+                <span className="text-slate-300 group-hover:text-orange-400 transition mt-1">→</span>
               </div>
             </a>
           ))}

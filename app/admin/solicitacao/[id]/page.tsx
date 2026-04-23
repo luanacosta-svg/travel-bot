@@ -86,7 +86,7 @@ export default function RequestDetailPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h1 className="text-xl font-bold text-slate-800">{req.requester.name}</h1>
-              <a href={`mailto:${req.requester.email}`} className="text-blue-600 text-sm">
+              <a href={`mailto:${req.requester.email}`} className="text-orange-500 text-sm">
                 {req.requester.email}
               </a>
               {req.requester.phone && (
@@ -116,9 +116,9 @@ export default function RequestDetailPage() {
             href={req.flightSearchUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:border-blue-300 hover:shadow-md transition group"
+            className="flex items-center gap-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:border-orange-300 hover:shadow-md transition group"
           >
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">🔍</div>
+            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-xl">🔍</div>
             <div className="flex-1">
               <p className="font-semibold text-slate-800">Ver voos no Google Flights</p>
               <p className="text-sm text-slate-400">
@@ -126,7 +126,7 @@ export default function RequestDetailPage() {
                 {req.travel.returnDate ? ` · volta ${req.travel.returnDate}` : ""}
               </p>
             </div>
-            <span className="text-slate-300 group-hover:text-blue-400 transition">↗</span>
+            <span className="text-slate-300 group-hover:text-orange-400 transition">↗</span>
           </a>
         )}
 
@@ -141,13 +141,13 @@ export default function RequestDetailPage() {
             onChange={(e) => setMessage(e.target.value)}
             rows={5}
             placeholder={`Ex: Encontrei 3 opções para você:\n\n1. LATAM — R$450 · Saída 07h10 → Chegada 08h30 (direto)\n2. Azul — R$390 · Saída 14h20 → Chegada 17h45 (1 escala)\n3. GOL — R$520 · Saída 18h00 → Chegada 19h20 (direto)`}
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
           />
           {!optionsSent ? (
             <button
               onClick={handleSendOptions}
               disabled={sendingOptions || !message.trim()}
-              className="mt-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition"
+              className="mt-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition"
             >
               {sendingOptions ? "Enviando..." : "Enviar por e-mail"}
             </button>
