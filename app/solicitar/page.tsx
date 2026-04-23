@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { AIRPORTS } from "@/lib/airports";
 import type { UserSession } from "@/types";
 
 type TravelType = "flight" | "event" | "both";
@@ -53,6 +54,11 @@ export default function SolicitarPage() {
             Preencha os dados e a equipe de compras entrará em contato.
           </p>
         </div>
+
+        {/* Datalist de aeroportos */}
+        <datalist id="airports">
+          {AIRPORTS.map((a) => <option key={a} value={a} />)}
+        </datalist>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Tipo */}
@@ -138,8 +144,9 @@ export default function SolicitarPage() {
                   <input
                     name="origin"
                     required={needsFlight}
+                    list="airports"
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Ex: GRU, Guarulhos, SP"
+                    placeholder="Ex: GRU – São Paulo (Guarulhos)"
                   />
                 </div>
                 <div>
@@ -149,8 +156,9 @@ export default function SolicitarPage() {
                   <input
                     name="destination"
                     required
+                    list="airports"
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Ex: BSB, Brasília, DF"
+                    placeholder="Ex: BSB – Brasília"
                   />
                 </div>
                 <div>
