@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import type { TravelRequest } from "@/types";
+import type { TravelRequest, ReimbursementRequest, InvoiceUpload } from "@/types";
 
 function createTransport() {
   return nodemailer.createTransport({
@@ -91,6 +91,7 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
+    cc: requester.email,
     subject: `[Nova solicitação] ${requester.name} → ${travel.destination}`,
     html: baseTemplate(`Nova solicitação de ${requester.name}`, body),
   });
@@ -136,5 +137,65 @@ export async function sendPurchaseConfirmation(req: TravelRequest): Promise<void
     to: req.requester.email,
     subject: `✓ Viagem confirmada — ${req.travel.destination}`,
     html: baseTemplate(`Viagem confirmada — ${req.travel.destination}`, body),
+  });
+}
+
+export async function sendReimbursementNotification(req: ReimbursementRequest): Promise<void> {
+  const transport = createTransport();
+  const amount = req.expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const body = `
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:20px;">
+      <p style="margin:0 0 8px;"><strong>Solicitante:</strong> ${req.requester.name} &lt;${req.requester.email}&gt;</p>
+      <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.expense.description}</p>
+      <p style="margin:0 0 8px;"><strong>Categoria:</strong> ${req.expense.category}</p>
+      <p style="margin:0 0 8px;"><strong>Data:</strong> ${req.expense.date}</p>
+      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+    </div>
+    ${req.expense.receiptFile
+      ? `<p style="color:#374151;">📎 Comprovante anexado — acesse o painel para visualizar.</p>`
+      : ""}
+    <div style="margin-top:20px;">
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
+         style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+        Abrir painel admin
+      </a>
+    </div>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: process.env.MANAGER_EMAIL,
+    cc: req.requester.email,
+    subject: `[Reembolso] ${req.requester.name} · ${amount}`,
+    html: baseTemplate(`Solicitação de reembolso — ${req.requester.name}`, body),
+  });
+}
+
+export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void> {
+  const transport = createTransport();
+  const amount = req.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const body = `
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:20px;">
+      <p style="margin:0 0 8px;"><strong>Enviado por:</strong> ${req.requester.name} &lt;${req.requester.email}&gt;</p>
+      <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
+      <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
+      ${req.invoice.cnpj ? `<p style="margin:0 0 8px;"><strong>CNPJ:</strong> ${req.invoice.cnpj}</p>` : ""}
+      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+    </div>
+    <p style="color:#374151;">📎 Nota fiscal anexada — acesse o painel para visualizar.</p>
+    <div style="margin-top:20px;">
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
+         style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+        Abrir painel admin
+      </a>
+    </div>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: process.env.MANAGER_EMAIL,
+    cc: req.requester.email,
+    subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
+    html: baseTemplate(`Nota fiscal enviada — ${req.requester.name}`, body),
   });
 }

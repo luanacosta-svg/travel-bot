@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname === "/dashboard" || pathname === "/solicitar" || pathname === "/minhas-solicitacoes") {
+  if (["/dashboard", "/solicitar", "/minhas-solicitacoes", "/reembolso", "/notas-fiscais"].includes(pathname)) {
     if (!userCookie) return NextResponse.redirect(new URL("/login", req.url));
     return NextResponse.next();
   }
