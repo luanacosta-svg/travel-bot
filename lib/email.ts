@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
+import fs from "fs";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload } from "@/types";
+import { getFilePath, fileExists } from "@/lib/fileUpload";
 
 function createTransport() {
   return nodemailer.createTransport({
@@ -153,7 +155,7 @@ export async function sendReimbursementNotification(req: ReimbursementRequest): 
       <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
     </div>
     ${req.expense.receiptFile
-      ? `<p style="color:#374151;">📎 Comprovante anexado — acesse o painel para visualizar.</p>`
+      ? `<p style="color:#374151;">📎 Comprovante em anexo neste e-mail.</p>`
       : ""}
     <div style="margin-top:20px;">
       <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
@@ -162,12 +164,21 @@ export async function sendReimbursementNotification(req: ReimbursementRequest): 
       </a>
     </div>`;
 
+  const attachments = [];
+  if (req.expense.receiptFile && fileExists(req.expense.receiptFile)) {
+    attachments.push({
+      filename: `comprovante-${req.requester.name.replace(/\s+/g, "-")}.${req.expense.receiptFile.split(".").pop()}`,
+      content: fs.readFileSync(getFilePath(req.expense.receiptFile)),
+    });
+  }
+
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: req.requester.email,
     subject: `[Reembolso] ${req.requester.name} · ${amount}`,
     html: baseTemplate(`Solicitação de reembolso — ${req.requester.name}`, body),
+    attachments,
   });
 }
 
@@ -183,7 +194,7 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
       ${req.invoice.cnpj ? `<p style="margin:0 0 8px;"><strong>CNPJ:</strong> ${req.invoice.cnpj}</p>` : ""}
       <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
     </div>
-    <p style="color:#374151;">📎 Nota fiscal anexada — acesse o painel para visualizar.</p>
+    <p style="color:#374151;">📎 Nota fiscal em anexo neste e-mail.</p>
     <div style="margin-top:20px;">
       <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
          style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
@@ -191,11 +202,20 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
       </a>
     </div>`;
 
+  const attachments = [];
+  if (fileExists(req.invoice.invoiceFile)) {
+    attachments.push({
+      filename: `nota-fiscal-${req.invoice.companyName.replace(/\s+/g, "-")}.${req.invoice.invoiceFile.split(".").pop()}`,
+      content: fs.readFileSync(getFilePath(req.invoice.invoiceFile)),
+    });
+  }
+
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: req.requester.email,
     subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
     html: baseTemplate(`Nota fiscal enviada — ${req.requester.name}`, body),
+    attachments,
   });
 }
