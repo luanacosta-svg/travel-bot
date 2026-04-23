@@ -22,4 +22,11 @@ export interface TravelRequest {
     notes?: string;
   };
   flightSearchUrl?: string;
+  managerMessage?: string;
+  purchaseInfo?: string;
+}
+
+export interface UserSession {
+  name: string;
+  email: string;
 }

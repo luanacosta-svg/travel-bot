@@ -116,3 +116,25 @@ export async function sendOptionsToRequester(
     html: baseTemplate(`Atualização da sua viagem — ${req.travel.destination}`, body),
   });
 }
+
+export async function sendPurchaseConfirmation(req: TravelRequest): Promise<void> {
+  const transport = createTransport();
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${req.requester.name}</strong>!</p>
+    <p style="color:#374151;">Boa notícia! Sua viagem para <strong>${req.travel.destination}</strong> foi confirmada. 🎉</p>
+    ${req.purchaseInfo
+      ? `<div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;color:#374151;">
+           <p style="margin:0;font-weight:600;color:#15803d;margin-bottom:4px;">✓ Confirmação de compra</p>
+           <p style="margin:0;">${req.purchaseInfo}</p>
+         </div>`
+      : ""}
+    <p style="color:#374151;margin-top:20px;">Qualquer dúvida, entre em contato com a equipe. Boa viagem!</p>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: req.requester.email,
+    subject: `✓ Viagem confirmada — ${req.travel.destination}`,
+    html: baseTemplate(`Viagem confirmada — ${req.travel.destination}`, body),
+  });
+}

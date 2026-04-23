@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequest, saveRequest } from "@/lib/store";
-import { sendOptionsToRequester } from "@/lib/email";
+import { sendPurchaseConfirmation } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const adminCookie = req.cookies.get("tb_admin");
@@ -8,16 +8,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const { requestId, managerMessage } = await req.json();
+  const { requestId, purchaseInfo } = await req.json();
   const travelRequest = getRequest(requestId);
   if (!travelRequest) {
     return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   }
 
-  travelRequest.status = "options_sent";
-  travelRequest.managerMessage = managerMessage ?? "";
+  travelRequest.status = "purchased";
+  travelRequest.purchaseInfo = purchaseInfo;
   saveRequest(travelRequest);
 
-  await sendOptionsToRequester(travelRequest, managerMessage ?? "");
+  await sendPurchaseConfirmation(travelRequest);
   return NextResponse.json({ success: true });
 }
