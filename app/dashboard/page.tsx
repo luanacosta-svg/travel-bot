@@ -156,7 +156,10 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
               <p className="text-3xl mb-2">📋</p>
               <p className="text-slate-500 text-sm mb-4">Nenhuma solicitação ainda.</p>
-              <a href="/solicitar" className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+              <a
+                href={activityFilter === "reimb" ? "/reembolso" : activityFilter === "inv" ? "/notas-fiscais" : "/solicitar"}
+                className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
+              >
                 Começar agora
               </a>
             </div>
@@ -164,7 +167,13 @@ export default function DashboardPage() {
 
           {!loading && allItems.length > 0 && recentAll.length === 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center">
-              <p className="text-slate-400 text-sm">Nenhum item nessa categoria.</p>
+              <p className="text-slate-400 text-sm">Nenhum item nessa categoria ainda.</p>
+              <a
+                href={activityFilter === "reimb" ? "/reembolso" : activityFilter === "inv" ? "/notas-fiscais" : "/solicitar"}
+                className="inline-block mt-3 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
+              >
+                + Nova solicitação
+              </a>
             </div>
           )}
 
