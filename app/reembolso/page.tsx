@@ -51,17 +51,18 @@ export default function ReembolsoPage() {
     setError("");
 
     try {
-      for (const item of items) {
-        const formData = new FormData();
-        formData.append("description", item.description);
-        formData.append("category", item.category);
-        formData.append("date", item.date);
-        formData.append("amount", item.amount);
-        if (item.file) formData.append("receiptFile", item.file);
+      const formData = new FormData();
+      formData.append("count", String(items.length));
+      items.forEach((item, i) => {
+        formData.append(`description_${i}`, item.description);
+        formData.append(`category_${i}`, item.category);
+        formData.append(`date_${i}`, item.date);
+        formData.append(`amount_${i}`, item.amount);
+        if (item.file) formData.append(`file_${i}`, item.file);
+      });
 
-        const res = await fetch("/api/reembolso/submit", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Erro ao enviar item");
-      }
+      const res = await fetch("/api/reembolso/submit", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Erro ao enviar");
       router.push("/minhas-solicitacoes?novo=1");
     } catch {
       setError("Erro ao enviar. Tente novamente.");

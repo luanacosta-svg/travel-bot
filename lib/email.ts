@@ -142,21 +142,47 @@ export async function sendPurchaseConfirmation(req: TravelRequest): Promise<void
   });
 }
 
-export async function sendReimbursementNotification(req: ReimbursementRequest): Promise<void> {
+export async function sendReimbursementBatchNotification(items: ReimbursementRequest[]): Promise<void> {
   const transport = createTransport();
-  const amount = req.expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const requester = items[0].requester;
+  const total = items.reduce((s, r) => s + r.expense.amount, 0);
+  const totalFmt = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const rows = items.map((item) => {
+    const amt = item.expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${item.expense.description}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-transform:capitalize;">${item.expense.category}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${item.expense.date}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">${amt}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">${item.expense.receiptFile ? "📎" : "—"}</td>
+    </tr>`;
+  }).join("");
 
   const body = `
     <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:20px;">
-      <p style="margin:0 0 8px;"><strong>Solicitante:</strong> ${req.requester.name} &lt;${req.requester.email}&gt;</p>
-      <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.expense.description}</p>
-      <p style="margin:0 0 8px;"><strong>Categoria:</strong> ${req.expense.category}</p>
-      <p style="margin:0 0 8px;"><strong>Data:</strong> ${req.expense.date}</p>
-      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+      <p style="margin:0 0 8px;"><strong>Solicitante:</strong> ${requester.name} &lt;${requester.email}&gt;</p>
+      <p style="margin:0;"><strong>${items.length} despesa${items.length > 1 ? "s" : ""} · Total: ${totalFmt}</strong></p>
     </div>
-    ${req.expense.receiptFile
-      ? `<p style="color:#374151;">📎 Comprovante em anexo neste e-mail.</p>`
-      : ""}
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;color:#374151;">
+      <thead>
+        <tr style="background:#f8fafc;">
+          <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e2e8f0;font-weight:600;">Descrição</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e2e8f0;font-weight:600;">Categoria</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e2e8f0;font-weight:600;">Data</th>
+          <th style="padding:8px 12px;text-align:right;border-bottom:2px solid #e2e8f0;font-weight:600;">Valor</th>
+          <th style="padding:8px 12px;text-align:center;border-bottom:2px solid #e2e8f0;font-weight:600;">Anexo</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background:#f8fafc;">
+          <td colspan="3" style="padding:10px 12px;font-weight:700;color:#1e293b;">Total</td>
+          <td style="padding:10px 12px;font-weight:700;color:#1e293b;text-align:right;">${totalFmt}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
     <div style="margin-top:20px;">
       <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
          style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
@@ -164,20 +190,26 @@ export async function sendReimbursementNotification(req: ReimbursementRequest): 
       </a>
     </div>`;
 
-  const attachments = [];
-  if (req.expense.receiptFile && fileExists(req.expense.receiptFile)) {
-    attachments.push({
-      filename: `comprovante-${req.requester.name.replace(/\s+/g, "-")}.${req.expense.receiptFile.split(".").pop()}`,
-      content: fs.readFileSync(getFilePath(req.expense.receiptFile)),
-    });
+  const attachments: { filename: string; content: Buffer }[] = [];
+  for (const item of items) {
+    if (item.expense.receiptFile && fileExists(item.expense.receiptFile)) {
+      attachments.push({
+        filename: `comprovante-${item.expense.description.replace(/\s+/g, "-").slice(0, 30)}.${item.expense.receiptFile.split(".").pop()}`,
+        content: fs.readFileSync(getFilePath(item.expense.receiptFile)),
+      });
+    }
   }
+
+  const subject = items.length === 1
+    ? `[Reembolso] ${requester.name} · ${items[0].expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+    : `[Reembolso] ${requester.name} · ${items.length} despesas · ${totalFmt}`;
 
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
-    cc: req.requester.email,
-    subject: `[Reembolso] ${req.requester.name} · ${amount}`,
-    html: baseTemplate(`Solicitação de reembolso — ${req.requester.name}`, body),
+    cc: requester.email,
+    subject,
+    html: baseTemplate(`Solicitação de reembolso — ${requester.name}`, body),
     attachments,
   });
 }
