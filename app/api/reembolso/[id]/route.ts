@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReimbursement, saveReimbursement, deleteReimbursement } from "@/lib/reimbursementStore";
 import { decodeSession } from "@/lib/session";
+import { sendReimbursementStatusUpdate } from "@/lib/email";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -34,9 +35,22 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 
   const body = await req.json();
+  const prevStatus = item.status;
+
   if (admin) {
     if (body.status) item.status = body.status;
     if (body.adminNote !== undefined) item.adminNote = body.adminNote;
+
+    if (body.status && body.status !== prevStatus) {
+      if (!item.history) item.history = [];
+      const label = body.status === "approved" ? "Aprovado" : body.status === "rejected" ? "Recusado" : body.status;
+      item.history.push({
+        date: new Date().toISOString(),
+        action: label,
+        by: "Admin",
+      });
+      sendReimbursementStatusUpdate(item).catch((e) => console.error("Email error:", e));
+    }
   } else {
     if (body.expense) item.expense = { ...item.expense, ...body.expense };
   }

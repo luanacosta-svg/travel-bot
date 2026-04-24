@@ -31,9 +31,14 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 
   const body = await req.json();
+  const prevStatus = item.status;
   if (admin) {
     if (body.status) item.status = body.status;
     if (body.adminNote !== undefined) item.adminNote = body.adminNote;
+    if (body.status && body.status !== prevStatus) {
+      if (!item.history) item.history = [];
+      item.history.push({ date: new Date().toISOString(), action: "Recebido", by: "Admin" });
+    }
   }
 
   saveInvoice(item);

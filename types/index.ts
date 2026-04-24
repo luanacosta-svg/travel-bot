@@ -37,6 +37,7 @@ export interface ReimbursementRequest {
     receiptFile?: string;
   };
   adminNote?: string;
+  history?: HistoryEntry[];
 }
 
 export interface InvoiceUpload {
@@ -52,9 +53,16 @@ export interface InvoiceUpload {
     invoiceFile: string;
   };
   adminNote?: string;
+  history?: HistoryEntry[];
 }
 
 export interface UserSession {
   name: string;
   email: string;
+}
+
+export interface HistoryEntry {
+  date: string;
+  action: string;
+  by: string;
 }
