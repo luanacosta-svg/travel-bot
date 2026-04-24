@@ -19,6 +19,12 @@ export function getInvoice(id: string): InvoiceUpload | undefined {
   return getAllInvoices().find((i) => i.id === id);
 }
 
+export function deleteInvoice(id: string): void {
+  ensureFile();
+  const all = getAllInvoices().filter((i) => i.id !== id);
+  fs.writeFileSync(FILE, JSON.stringify(all, null, 2), "utf-8");
+}
+
 export function saveInvoice(item: InvoiceUpload): void {
   ensureFile();
   const all = getAllInvoices();

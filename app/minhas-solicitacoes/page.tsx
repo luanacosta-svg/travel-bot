@@ -29,8 +29,15 @@ const STATUS_COLOR: Record<string, string> = {
   received: "bg-green-100 text-green-800",
 };
 
-function TravelCard({ req }: { req: TravelRequest }) {
+function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  async function handleDelete() {
+    await fetch(`/api/requests/${req.id}`, { method: "DELETE" });
+    onDelete();
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
@@ -69,9 +76,22 @@ function TravelCard({ req }: { req: TravelRequest }) {
             </div>
           )}
           {req.status === "pending" && (
-            <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
-              Sua solicitação está sendo analisada. Em breve você receberá um e-mail.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
+                Sua solicitação está sendo analisada. Em breve você receberá um e-mail.
+              </p>
+              <div className="flex gap-2">
+                <a href={`/solicitar?edit=${req.id}`} className="text-xs font-medium text-orange-500 hover:text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 transition">✏ Editar</a>
+                {confirming ? (
+                  <>
+                    <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
+                    <button onClick={() => setConfirming(false)} className="text-xs font-medium text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">Cancelar</button>
+                  </>
+                ) : (
+                  <button onClick={() => setConfirming(true)} className="text-xs font-medium text-red-400 hover:text-red-600 border border-red-100 rounded-lg px-3 py-1.5 transition">🗑 Excluir</button>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -79,10 +99,16 @@ function TravelCard({ req }: { req: TravelRequest }) {
   );
 }
 
-function ReimbursementCard({ req }: { req: ReimbursementRequest }) {
+function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const s = STATUS_LABEL[req.status];
   const sc = STATUS_COLOR[req.status];
+
+  async function handleDelete() {
+    await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" });
+    onDelete();
+  }
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
@@ -108,16 +134,35 @@ function ReimbursementCard({ req }: { req: ReimbursementRequest }) {
               <p className="text-slate-700">{req.adminNote}</p>
             </div>
           )}
+          {req.status === "pending" && (
+            <div className="flex gap-2 mt-1">
+              {confirming ? (
+                <>
+                  <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
+                  <button onClick={() => setConfirming(false)} className="text-xs font-medium text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">Cancelar</button>
+                </>
+              ) : (
+                <button onClick={() => setConfirming(true)} className="text-xs font-medium text-red-400 hover:text-red-600 border border-red-100 rounded-lg px-3 py-1.5 transition">🗑 Excluir</button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function InvoiceCard({ inv }: { inv: InvoiceUpload }) {
+function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const s = STATUS_LABEL[inv.status];
   const sc = STATUS_COLOR[inv.status];
+
+  async function handleDelete() {
+    await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" });
+    onDelete();
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
@@ -138,6 +183,18 @@ function InvoiceCard({ inv }: { inv: InvoiceUpload }) {
           <p><span className="text-slate-400">Empresa:</span> {inv.invoice.companyName}</p>
           {inv.invoice.cnpj && <p><span className="text-slate-400">CNPJ:</span> {inv.invoice.cnpj}</p>}
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(inv.invoice.amount)}</span></p>
+          {inv.status === "pending" && (
+            <div className="flex gap-2 mt-1">
+              {confirming ? (
+                <>
+                  <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
+                  <button onClick={() => setConfirming(false)} className="text-xs font-medium text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">Cancelar</button>
+                </>
+              ) : (
+                <button onClick={() => setConfirming(true)} className="text-xs font-medium text-red-400 hover:text-red-600 border border-red-100 rounded-lg px-3 py-1.5 transition">🗑 Excluir</button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -156,6 +213,18 @@ function Content() {
   const [invoices, setInvoices] = useState<InvoiceUpload[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabKey>("all");
+
+  function refresh() {
+    Promise.all([
+      fetch("/api/requests/mine").then((r) => r.json()),
+      fetch("/api/reembolso/mine").then((r) => r.json()),
+      fetch("/api/notas-fiscais/mine").then((r) => r.json()),
+    ]).then(([t, r, i]) => {
+      setTravels(Array.isArray(t) ? t : []);
+      setReimbursements(Array.isArray(r) ? r : []);
+      setInvoices(Array.isArray(i) ? i : []);
+    });
+  }
 
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
@@ -212,19 +281,19 @@ function Content() {
         {!loading && (tab === "all" || tab === "travels") && travels.length > 0 && (
           <div className="space-y-3 mb-3">
             {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1">Viagens</p>}
-            {travels.map((r) => <TravelCard key={r.id} req={r} />)}
+            {travels.map((r) => <TravelCard key={r.id} req={r} onDelete={refresh} />)}
           </div>
         )}
         {!loading && (tab === "all" || tab === "reimbursements") && reimbursements.length > 0 && (
           <div className="space-y-3 mb-3">
             {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mt-4">Reembolsos</p>}
-            {reimbursements.map((r) => <ReimbursementCard key={r.id} req={r} />)}
+            {reimbursements.map((r) => <ReimbursementCard key={r.id} req={r} onDelete={refresh} />)}
           </div>
         )}
         {!loading && (tab === "all" || tab === "invoices") && invoices.length > 0 && (
           <div className="space-y-3 mb-3">
             {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mt-4">Notas Fiscais</p>}
-            {invoices.map((i) => <InvoiceCard key={i.id} inv={i} />)}
+            {invoices.map((i) => <InvoiceCard key={i.id} inv={i} onDelete={refresh} />)}
           </div>
         )}
 

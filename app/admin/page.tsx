@@ -109,20 +109,22 @@ export default function AdminPage() {
           <div className="space-y-3">
             {travels.length === 0 && <Empty />}
             {travels.map((req) => (
-              <a key={req.id} href={`/admin/solicitacao/${req.id}`}
-                className="block bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md hover:border-orange-200 transition-all group">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <StatusBadge status={req.status} />
-                      <span className="text-xs text-slate-400">{req.travel.type === "flight" ? "✈ Passagem" : req.travel.type === "event" ? "🎟 Ingresso" : "✈🎟 Ambos"}</span>
+              <div key={req.id} className="relative bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group">
+                <a href={`/admin/solicitacao/${req.id}`} className="block p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <StatusBadge status={req.status} />
+                        <span className="text-xs text-slate-400">{req.travel.type === "flight" ? "✈ Passagem" : req.travel.type === "event" ? "🎟 Ingresso" : "✈🎟 Ambos"}</span>
+                      </div>
+                      <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">→ {req.travel.destination}{req.travel.eventName ? ` · ${req.travel.eventName}` : ""}</span></p>
+                      <p className="text-sm text-slate-400 mt-0.5">{req.requester.email}{req.travel.departureDate ? ` · ${req.travel.departureDate}` : ""} · {formatDate(req.createdAt)}</p>
                     </div>
-                    <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">→ {req.travel.destination}{req.travel.eventName ? ` · ${req.travel.eventName}` : ""}</span></p>
-                    <p className="text-sm text-slate-400 mt-0.5">{req.requester.email}{req.travel.departureDate ? ` · ${req.travel.departureDate}` : ""} · {formatDate(req.createdAt)}</p>
+                    <span className="text-slate-300 group-hover:text-orange-400 transition mt-1">→</span>
                   </div>
-                  <span className="text-slate-300 group-hover:text-orange-400 transition mt-1">→</span>
-                </div>
-              </a>
+                </a>
+                <DeleteButton onDelete={async () => { await fetch(`/api/requests/${req.id}`, { method: "DELETE" }); fetchAll(); }} />
+              </div>
             ))}
           </div>
         )}
@@ -160,7 +162,20 @@ function Empty() {
   );
 }
 
-function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpdate: () => void }) {
+function DeleteButton({ onDelete }: { onDelete: () => void }) {
+  const [confirm, setConfirm] = useState(false);
+  if (confirm) return (
+    <div className="absolute top-3 right-3 flex gap-1">
+      <button onClick={onDelete} className="text-xs bg-red-500 text-white px-2 py-1 rounded-lg font-medium">Confirmar</button>
+      <button onClick={() => setConfirm(false)} className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-lg font-medium">Cancelar</button>
+    </div>
+  );
+  return (
+    <button onClick={() => setConfirm(true)} className="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition text-lg leading-none" title="Excluir">🗑</button>
+  );
+}
+
+function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpdate: () => void; }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(req.adminNote ?? "");
   const [saving, setSaving] = useState(false);
@@ -178,7 +193,8 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -189,7 +205,7 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
             <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">· {req.expense.description}</span></p>
             <p className="text-sm text-slate-400">{req.requester.email} · {formatCurrency(req.expense.amount)} · {req.expense.date}</p>
           </div>
-          <span className="text-slate-300">{open ? "▲" : "▼"}</span>
+          <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
         </div>
       </button>
 
@@ -245,7 +261,8 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <DeleteButton onDelete={async () => { await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" }); onUpdate(); }} />
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -256,7 +273,7 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
             <p className="font-semibold text-slate-800">{inv.requester.name} <span className="font-normal text-slate-400 text-sm">· {inv.invoice.description}</span></p>
             <p className="text-sm text-slate-400">{inv.invoice.companyName} · {formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
           </div>
-          <span className="text-slate-300">{open ? "▲" : "▼"}</span>
+          <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
         </div>
       </button>
 

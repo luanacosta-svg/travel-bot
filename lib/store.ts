@@ -29,6 +29,12 @@ export function saveRequest(request: TravelRequest): void {
   fs.writeFileSync(DATA_FILE, JSON.stringify(all, null, 2), "utf-8");
 }
 
+export function deleteRequest(id: string): void {
+  ensureFile();
+  const all = getAllRequests().filter((r) => r.id !== id);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(all, null, 2), "utf-8");
+}
+
 export function updateStatus(id: string, status: TravelRequest["status"]): void {
   const all = getAllRequests();
   const req = all.find((r) => r.id === id);

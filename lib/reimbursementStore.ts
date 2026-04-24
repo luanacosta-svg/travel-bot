@@ -19,6 +19,12 @@ export function getReimbursement(id: string): ReimbursementRequest | undefined {
   return getAllReimbursements().find((r) => r.id === id);
 }
 
+export function deleteReimbursement(id: string): void {
+  ensureFile();
+  const all = getAllReimbursements().filter((r) => r.id !== id);
+  fs.writeFileSync(FILE, JSON.stringify(all, null, 2), "utf-8");
+}
+
 export function saveReimbursement(item: ReimbursementRequest): void {
   ensureFile();
   const all = getAllReimbursements();
