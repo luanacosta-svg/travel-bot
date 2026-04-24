@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import StatusBadge from "@/components/StatusBadge";
@@ -13,12 +13,31 @@ function formatDate(iso: string) {
   });
 }
 
+function FileInput({ label, file, onChange }: { label: string; file: File | null; onChange: (f: File | null) => void }) {
+  return (
+    <div className="mt-3">
+      <label className="block text-xs font-medium text-slate-500 mb-1">{label}</label>
+      <label className={`flex items-center gap-2 w-full border-2 border-dashed rounded-xl px-4 py-2.5 cursor-pointer transition text-sm
+        ${file ? "border-orange-400 bg-orange-50 text-orange-700" : "border-slate-200 hover:border-orange-300 hover:bg-orange-50 text-slate-400"}`}>
+        <input type="file" accept="image/*,.pdf,.doc,.docx" className="hidden"
+          onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+        <span>{file ? "📎" : "📤"}</span>
+        <span className="truncate">{file ? file.name : "Anexar documento (opcional)"}</span>
+        {file && <button type="button" onClick={(e) => { e.preventDefault(); onChange(null); }}
+          className="ml-auto text-orange-400 hover:text-red-500 text-xs">✕</button>}
+      </label>
+    </div>
+  );
+}
+
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [req, setReq] = useState<TravelRequest | null>(null);
   const [message, setMessage] = useState("");
   const [purchaseInfo, setPurchaseInfo] = useState("");
+  const [optionsFile, setOptionsFile] = useState<File | null>(null);
+  const [purchaseFile, setPurchaseFile] = useState<File | null>(null);
   const [sendingOptions, setSendingOptions] = useState(false);
   const [markingPurchased, setMarkingPurchased] = useState(false);
   const [optionsSent, setOptionsSent] = useState(false);
@@ -38,22 +57,22 @@ export default function RequestDetailPage() {
 
   async function handleSendOptions() {
     setSendingOptions(true);
-    const res = await fetch("/api/send-options", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: id, managerMessage: message }),
-    });
+    const formData = new FormData();
+    formData.append("requestId", id);
+    formData.append("managerMessage", message);
+    if (optionsFile) formData.append("file", optionsFile);
+    const res = await fetch("/api/send-options", { method: "POST", body: formData });
     setSendingOptions(false);
     if (res.ok) { setOptionsSent(true); setReq((r) => r ? { ...r, status: "options_sent" } : r); }
   }
 
   async function handleMarkPurchased() {
     setMarkingPurchased(true);
-    const res = await fetch("/api/mark-purchased", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: id, purchaseInfo }),
-    });
+    const formData = new FormData();
+    formData.append("requestId", id);
+    formData.append("purchaseInfo", purchaseInfo);
+    if (purchaseFile) formData.append("file", purchaseFile);
+    const res = await fetch("/api/mark-purchased", { method: "POST", body: formData });
     setMarkingPurchased(false);
     if (res.ok) { setPurchased(true); setReq((r) => r ? { ...r, status: "purchased" } : r); }
   }
@@ -143,6 +162,7 @@ export default function RequestDetailPage() {
             placeholder={`Ex: Encontrei 3 opções para você:\n\n1. LATAM — R$450 · Saída 07h10 → Chegada 08h30 (direto)\n2. Azul — R$390 · Saída 14h20 → Chegada 17h45 (1 escala)\n3. GOL — R$520 · Saída 18h00 → Chegada 19h20 (direto)`}
             className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
           />
+          <FileInput label="Anexar documento (PDF, imagem, Word)" file={optionsFile} onChange={setOptionsFile} />
           {!optionsSent ? (
             <button
               onClick={handleSendOptions}
@@ -156,10 +176,7 @@ export default function RequestDetailPage() {
               <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-2.5 flex-1">
                 ✓ Enviado para {req.requester.email}
               </p>
-              <button
-                onClick={() => { setOptionsSent(false); }}
-                className="text-xs text-slate-400 hover:text-slate-600 px-3"
-              >
+              <button onClick={() => setOptionsSent(false)} className="text-xs text-slate-400 hover:text-slate-600 px-3">
                 Reenviar
               </button>
             </div>
@@ -179,6 +196,7 @@ export default function RequestDetailPage() {
             placeholder="Ex: Passagem comprada! Localizador: ABC123 · LATAM · Saída 07h10 · 10/05"
             className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
           />
+          <FileInput label="Anexar bilhete / comprovante (opcional)" file={purchaseFile} onChange={setPurchaseFile} />
           {!purchased ? (
             <button
               onClick={handleMarkPurchased}

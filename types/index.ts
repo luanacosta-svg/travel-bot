@@ -22,6 +22,8 @@ export interface TravelRequest {
   flightSearchUrl?: string;
   managerMessage?: string;
   purchaseInfo?: string;
+  optionsFile?: string;
+  purchaseFile?: string;
 }
 
 export interface ReimbursementRequest {
@@ -59,6 +61,7 @@ export interface InvoiceUpload {
 export interface UserSession {
   name: string;
   email: string;
+  phone?: string;
 }
 
 export interface HistoryEntry {

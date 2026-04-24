@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequest, saveRequest } from "@/lib/store";
+import { saveUploadedFile } from "@/lib/fileUpload";
 import { sendOptionsToRequester } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
@@ -8,16 +9,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const { requestId, managerMessage } = await req.json();
+  const formData = await req.formData();
+  const requestId = String(formData.get("requestId") ?? "");
+  const managerMessage = String(formData.get("managerMessage") ?? "");
+
   const travelRequest = getRequest(requestId);
   if (!travelRequest) {
     return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   }
 
+  let attachFile: string | undefined;
+  const file = formData.get("file") as File | null;
+  if (file && file.size > 0) {
+    attachFile = await saveUploadedFile(file, `options-${requestId}`);
+    travelRequest.optionsFile = attachFile;
+  }
+
   travelRequest.status = "options_sent";
-  travelRequest.managerMessage = managerMessage ?? "";
+  travelRequest.managerMessage = managerMessage;
   saveRequest(travelRequest);
 
-  await sendOptionsToRequester(travelRequest, managerMessage ?? "");
+  await sendOptionsToRequester(travelRequest, managerMessage, attachFile);
   return NextResponse.json({ success: true });
 }

@@ -23,3 +23,23 @@ services:
         sync: false
       - key: NEXT_PUBLIC_BASE_URL
         sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: travel-bot-monthly-report
+    runtime: node
+    schedule: "0 8 1 * *"
+    buildCommand: echo "noop"
+    startCommand: >
+      node -e "
+        fetch(
+          process.env.BASE_URL + '/api/cron/monthly-report',
+          { headers: { 'x-cron-secret': process.env.CRON_SECRET } }
+        ).then(r => r.json()).then(console.log).catch(console.error)
+      "
+    envVars:
+      - key: BASE_URL
+        value: https://travel-bot-yrh3.onrender.com
+      - key: CRON_SECRET
+        sync: false

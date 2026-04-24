@@ -29,6 +29,116 @@ const STATUS_COLOR: Record<string, string> = {
   received: "bg-green-100 text-green-800",
 };
 
+function exportCSV(
+  travels: TravelRequest[],
+  reimbursements: ReimbursementRequest[],
+  invoices: InvoiceUpload[]
+) {
+  const header = ["Tipo", "Data", "Descrição", "Valor", "Status"];
+  const rows: string[][] = [header];
+  travels.forEach((r) => rows.push([
+    "Viagem",
+    formatDate(r.createdAt),
+    `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`,
+    "",
+    STATUS_LABEL[r.status] ?? r.status,
+  ]));
+  reimbursements.forEach((r) => rows.push([
+    "Reembolso",
+    formatDate(r.createdAt),
+    r.expense.description,
+    String(r.expense.amount),
+    STATUS_LABEL[r.status] ?? r.status,
+  ]));
+  invoices.forEach((i) => rows.push([
+    "Nota Fiscal",
+    formatDate(i.createdAt),
+    `${i.invoice.description} — ${i.invoice.companyName}`,
+    String(i.invoice.amount),
+    STATUS_LABEL[i.status] ?? i.status,
+  ]));
+  const content = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `minhas-solicitacoes.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printReport(
+  user: UserSession | null,
+  travels: TravelRequest[],
+  reimbursements: ReimbursementRequest[],
+  invoices: InvoiceUpload[]
+) {
+  const fmt = formatCurrency;
+  const reimbTotal = reimbursements.reduce((s, r) => s + r.expense.amount, 0);
+  const invTotal = invoices.reduce((s, i) => s + i.invoice.amount, 0);
+
+  const travelRows = travels.map((r) => `
+    <tr>
+      <td>${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? "<br><small>" + r.travel.eventName + "</small>" : ""}</td>
+      <td>${r.travel.departureDate ?? "—"}</td>
+      <td>${formatDate(r.createdAt)}</td>
+      <td>${STATUS_LABEL[r.status] ?? r.status}</td>
+    </tr>`).join("") || `<tr><td colspan="4" style="color:#999;text-align:center;">Nenhuma viagem</td></tr>`;
+
+  const reimbRows = reimbursements.map((r) => `
+    <tr>
+      <td>${r.expense.description}</td>
+      <td style="text-transform:capitalize">${r.expense.category}</td>
+      <td>${r.expense.date}</td>
+      <td style="text-align:right">${fmt(r.expense.amount)}</td>
+      <td>${STATUS_LABEL[r.status] ?? r.status}</td>
+    </tr>`).join("") || `<tr><td colspan="5" style="color:#999;text-align:center;">Nenhum reembolso</td></tr>`;
+
+  const invRows = invoices.map((i) => `
+    <tr>
+      <td>${i.invoice.description}</td>
+      <td>${i.invoice.companyName}</td>
+      <td>${formatDate(i.createdAt)}</td>
+      <td style="text-align:right">${fmt(i.invoice.amount)}</td>
+      <td>${STATUS_LABEL[i.status] ?? i.status}</td>
+    </tr>`).join("") || `<tr><td colspan="5" style="color:#999;text-align:center;">Nenhuma nota fiscal</td></tr>`;
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Relatório de solicitações</title>
+    <style>
+      body { font-family: -apple-system, sans-serif; color: #1e293b; padding: 32px; font-size: 13px; }
+      h1 { font-size: 20px; margin-bottom: 4px; }
+      .sub { color: #64748b; margin-bottom: 24px; font-size: 12px; }
+      h2 { font-size: 14px; color: #f97316; margin: 24px 0 8px; border-bottom: 2px solid #fed7aa; padding-bottom: 4px; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+      th { background: #f8fafc; text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+      td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+      .total { background: #eff6ff; padding: 12px 16px; border-radius: 8px; margin-top: 8px; font-weight: 700; font-size: 14px; }
+      small { color: #64748b; font-size: 11px; }
+    </style></head><body>
+    <h1>Relatório de solicitações</h1>
+    <div class="sub">${user?.name ?? ""} · ${user?.email ?? ""} · Gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
+
+    <h2>✈ Viagens (${travels.length})</h2>
+    <table><thead><tr><th>Destino</th><th>Data ida</th><th>Solicitado</th><th>Status</th></tr></thead>
+    <tbody>${travelRows}</tbody></table>
+
+    <h2>💸 Reembolsos (${reimbursements.length})</h2>
+    <table><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
+    <tbody>${reimbRows}</tbody>
+    <tfoot><tr><td colspan="3"><strong>Total</strong></td><td style="text-align:right"><strong>${fmt(reimbTotal)}</strong></td><td></td></tr></tfoot></table>
+
+    <h2>🧾 Notas Fiscais (${invoices.length})</h2>
+    <table><thead><tr><th>Descrição</th><th>Empresa</th><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
+    <tbody>${invRows}</tbody>
+    <tfoot><tr><td colspan="3"><strong>Total</strong></td><td style="text-align:right"><strong>${fmt(invTotal)}</strong></td><td></td></tr></tfoot></table>
+
+    <div class="total">Total geral (reembolsos + notas): ${fmt(reimbTotal + invTotal)}</div>
+    <script>window.onload = () => window.print();</script>
+  </body></html>`;
+
+  const win = window.open("", "_blank");
+  if (win) { win.document.write(html); win.document.close(); }
+}
+
 function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -247,6 +357,8 @@ function Content() {
     { key: "invoices", label: "🧾 NFs", count: invoices.length },
   ];
 
+  const hasData = travels.length > 0 || reimbursements.length > 0 || invoices.length > 0;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Minhas solicitações" />
@@ -263,7 +375,25 @@ function Content() {
 
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-slate-800">Minhas solicitações</h1>
-          <a href="/solicitar" className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">+ Nova</a>
+          <div className="flex items-center gap-2">
+            {hasData && !loading && (
+              <>
+                <button
+                  onClick={() => exportCSV(travels, reimbursements, invoices)}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg px-3 py-1.5 transition"
+                >
+                  ↓ CSV
+                </button>
+                <button
+                  onClick={() => printReport(user, travels, reimbursements, invoices)}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg px-3 py-1.5 transition"
+                >
+                  🖨 PDF
+                </button>
+              </>
+            )}
+            <a href="/solicitar" className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">+ Nova</a>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -297,7 +427,7 @@ function Content() {
           </div>
         )}
 
-        {!loading && travels.length === 0 && reimbursements.length === 0 && invoices.length === 0 && (
+        {!loading && !hasData && (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
             <p className="text-4xl mb-3">📋</p>
             <p className="font-semibold text-slate-700 mb-1">Nenhuma solicitação ainda</p>

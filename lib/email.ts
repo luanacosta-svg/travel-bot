@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import fs from "fs";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload } from "@/types";
+
+const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 import { getFilePath, fileExists } from "@/lib/fileUpload";
 
 function createTransport() {
@@ -101,7 +103,8 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
 
 export async function sendOptionsToRequester(
   req: TravelRequest,
-  managerMessage: string
+  managerMessage: string,
+  attachFile?: string
 ): Promise<void> {
   const transport = createTransport();
 
@@ -110,17 +113,27 @@ export async function sendOptionsToRequester(
     <p style="color:#374151;">Sua solicitação de viagem para <strong>${req.travel.destination}</strong> foi analisada.</p>
     ${managerMessage ? `<div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;color:#374151;">${managerMessage}</div>` : ""}
     ${req.travel.eventName ? `<div style="background:#eff6ff;border-radius:8px;padding:16px;margin-top:16px;"><strong>Evento:</strong> ${req.travel.eventName}</div>` : ""}
+    ${attachFile ? `<p style="color:#374151;margin-top:16px;">📎 Documento em anexo neste e-mail.</p>` : ""}
     <p style="color:#374151;margin-top:20px;">Em breve você receberá a confirmação da compra. Qualquer dúvida, entre em contato.</p>`;
+
+  const attachments: { filename: string; content: Buffer }[] = [];
+  if (attachFile && fileExists(attachFile)) {
+    attachments.push({
+      filename: `documento-viagem.${attachFile.split(".").pop()}`,
+      content: fs.readFileSync(getFilePath(attachFile)),
+    });
+  }
 
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `Sua solicitação de viagem — ${req.travel.destination} ✈`,
     html: baseTemplate(`Atualização da sua viagem — ${req.travel.destination}`, body),
+    attachments,
   });
 }
 
-export async function sendPurchaseConfirmation(req: TravelRequest): Promise<void> {
+export async function sendPurchaseConfirmation(req: TravelRequest, attachFile?: string): Promise<void> {
   const transport = createTransport();
 
   const body = `
@@ -132,13 +145,23 @@ export async function sendPurchaseConfirmation(req: TravelRequest): Promise<void
            <p style="margin:0;">${req.purchaseInfo}</p>
          </div>`
       : ""}
+    ${attachFile ? `<p style="color:#374151;margin-top:16px;">📎 Comprovante/bilhete em anexo neste e-mail.</p>` : ""}
     <p style="color:#374151;margin-top:20px;">Qualquer dúvida, entre em contato com a equipe. Boa viagem!</p>`;
+
+  const attachments: { filename: string; content: Buffer }[] = [];
+  if (attachFile && fileExists(attachFile)) {
+    attachments.push({
+      filename: `confirmacao-${req.travel.destination.replace(/\s+/g, "-")}.${attachFile.split(".").pop()}`,
+      content: fs.readFileSync(getFilePath(attachFile)),
+    });
+  }
 
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `✓ Viagem confirmada — ${req.travel.destination}`,
     html: baseTemplate(`Viagem confirmada — ${req.travel.destination}`, body),
+    attachments,
   });
 }
 
@@ -274,5 +297,89 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
     subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
     html: baseTemplate(`Nota fiscal enviada — ${req.requester.name}`, body),
     attachments,
+  });
+}
+
+export async function sendMonthlyReport(
+  reimbursements: ReimbursementRequest[],
+  invoices: InvoiceUpload[],
+  month: number,
+  year: number
+): Promise<void> {
+  const transport = createTransport();
+  const monthName = `${MONTH_NAMES[month]} ${year}`;
+  const reimbTotal = reimbursements.reduce((s, r) => s + r.expense.amount, 0);
+  const invTotal = invoices.reduce((s, i) => s + i.invoice.amount, 0);
+  const grandTotal = reimbTotal + invTotal;
+  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const reimbRows = reimbursements.map((r) => `
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${r.requester.name}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${r.expense.description}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-transform:capitalize;">${r.expense.category}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(r.expense.amount)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${r.status === "approved" ? "✓ Aprovado" : r.status === "rejected" ? "Recusado" : "Pendente"}</td>
+    </tr>`).join("") || `<tr><td colspan="5" style="padding:10px;color:#94a3b8;text-align:center;">Nenhum reembolso no período</td></tr>`;
+
+  const invRows = invoices.map((i) => `
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.requester.name}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.invoice.description}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.invoice.companyName}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(i.invoice.amount)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.status === "received" ? "✓ Recebido" : "Pendente"}</td>
+    </tr>`).join("") || `<tr><td colspan="5" style="padding:10px;color:#94a3b8;text-align:center;">Nenhuma nota fiscal no período</td></tr>`;
+
+  const tableStyle = `width:100%;border-collapse:collapse;font-size:13px;color:#374151;margin-bottom:24px;`;
+  const thStyle = `padding:8px 10px;text-align:left;border-bottom:2px solid #e2e8f0;font-weight:600;background:#f8fafc;`;
+
+  const body = `
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1e293b;">Resumo de ${monthName}</p>
+      <p style="margin:0;color:#64748b;">Reembolsos: <strong>${fmt(reimbTotal)}</strong> &nbsp;·&nbsp; Notas fiscais: <strong>${fmt(invTotal)}</strong> &nbsp;·&nbsp; Total: <strong style="color:#2563eb;">${fmt(grandTotal)}</strong></p>
+    </div>
+
+    <h3 style="color:#1e293b;font-size:15px;margin:0 0 10px;">💸 Reembolsos (${reimbursements.length})</h3>
+    <table style="${tableStyle}">
+      <thead><tr>
+        <th style="${thStyle}">Solicitante</th><th style="${thStyle}">Descrição</th>
+        <th style="${thStyle}">Categoria</th><th style="${thStyle}">Valor</th><th style="${thStyle}">Status</th>
+      </tr></thead>
+      <tbody>${reimbRows}</tbody>
+      <tfoot><tr>
+        <td colspan="3" style="padding:8px 10px;font-weight:700;">Total reembolsos</td>
+        <td style="padding:8px 10px;font-weight:700;text-align:right;">${fmt(reimbTotal)}</td><td></td>
+      </tr></tfoot>
+    </table>
+
+    <h3 style="color:#1e293b;font-size:15px;margin:0 0 10px;">🧾 Notas Fiscais (${invoices.length})</h3>
+    <table style="${tableStyle}">
+      <thead><tr>
+        <th style="${thStyle}">Solicitante</th><th style="${thStyle}">Descrição</th>
+        <th style="${thStyle}">Empresa</th><th style="${thStyle}">Valor</th><th style="${thStyle}">Status</th>
+      </tr></thead>
+      <tbody>${invRows}</tbody>
+      <tfoot><tr>
+        <td colspan="3" style="padding:8px 10px;font-weight:700;">Total notas fiscais</td>
+        <td style="padding:8px 10px;font-weight:700;text-align:right;">${fmt(invTotal)}</td><td></td>
+      </tr></tfoot>
+    </table>
+
+    <div style="background:#eff6ff;border-radius:8px;padding:16px;margin-top:8px;">
+      <p style="margin:0;font-weight:700;color:#1e40af;font-size:16px;">Total geral: ${fmt(grandTotal)}</p>
+    </div>
+    <div style="margin-top:20px;">
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin"
+         style="background:#64748b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+        Abrir painel admin
+      </a>
+    </div>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: process.env.MANAGER_EMAIL,
+    subject: `[Relatório Mensal] ${monthName} · Total ${fmt(grandTotal)}`,
+    html: baseTemplate(`Relatório de ${monthName}`, body),
   });
 }

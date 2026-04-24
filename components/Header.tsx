@@ -27,6 +27,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
     { href: "/reembolso", label: "Reembolso" },
     { href: "/notas-fiscais", label: "Nota Fiscal" },
     { href: "/minhas-solicitacoes", label: "Minhas solicitações" },
+    { href: "/perfil", label: "Perfil" },
   ];
 
   return (
