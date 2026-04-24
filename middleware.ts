@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (["/dashboard", "/solicitar", "/minhas-solicitacoes", "/reembolso", "/notas-fiscais"].includes(pathname)) {
+  if (["/dashboard", "/solicitar", "/minhas-solicitacoes", "/reembolso", "/notas-fiscais", "/perfil"].includes(pathname)) {
     if (!userCookie) return NextResponse.redirect(new URL("/login", req.url));
     return NextResponse.next();
   }
@@ -25,5 +25,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/solicitar", "/minhas-solicitacoes", "/admin/:path*"],
+  matcher: ["/", "/solicitar", "/minhas-solicitacoes", "/admin/:path*", "/perfil"],
 };
