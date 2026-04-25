@@ -321,6 +321,7 @@ export async function sendInvoiceStatusUpdate(req: InvoiceUpload): Promise<void>
   await transport.sendMail({
     from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
+    cc: process.env.MANAGER_EMAIL,
     subject: `${received ? "✓ Nota fiscal recebida" : "Nota fiscal recusada"} — ${req.invoice.description}`,
     html: baseTemplate(`Nota fiscal ${received ? "recebida" : "recusada"} — ${req.requester.name}`, body),
   });
