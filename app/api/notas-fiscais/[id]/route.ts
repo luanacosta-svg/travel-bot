@@ -62,8 +62,8 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
   if (!admin && (!session || session.email !== item.requester.email)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  if (!admin && item.status !== "pending") {
-    return NextResponse.json({ error: "Só é possível excluir itens pendentes" }, { status: 403 });
+  if (!admin && item.status !== "pending" && item.status !== "rejected") {
+    return NextResponse.json({ error: "Só é possível excluir itens pendentes ou recusados" }, { status: 403 });
   }
 
   deleteInvoice(id);

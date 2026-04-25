@@ -186,21 +186,23 @@ function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => voi
             </div>
           )}
           {req.status === "pending" && (
-            <div className="space-y-2">
-              <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
-                Sua solicitação está sendo analisada. Em breve você receberá um e-mail.
-              </p>
-              <div className="flex gap-2">
+            <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
+              Sua solicitação está sendo analisada. Em breve você receberá um e-mail.
+            </p>
+          )}
+          {(req.status === "pending" || req.status === "rejected") && (
+            <div className="flex gap-2">
+              {req.status === "pending" && (
                 <a href={`/solicitar?edit=${req.id}`} className="text-xs font-medium text-orange-500 hover:text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 transition">✏ Editar</a>
-                {confirming ? (
-                  <>
-                    <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
-                    <button onClick={() => setConfirming(false)} className="text-xs font-medium text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">Cancelar</button>
-                  </>
-                ) : (
-                  <button onClick={() => setConfirming(true)} className="text-xs font-medium text-red-400 hover:text-red-600 border border-red-100 rounded-lg px-3 py-1.5 transition">🗑 Excluir</button>
-                )}
-              </div>
+              )}
+              {confirming ? (
+                <>
+                  <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
+                  <button onClick={() => setConfirming(false)} className="text-xs font-medium text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">Cancelar</button>
+                </>
+              ) : (
+                <button onClick={() => setConfirming(true)} className="text-xs font-medium text-red-400 hover:text-red-600 border border-red-100 rounded-lg px-3 py-1.5 transition">🗑 Excluir</button>
+              )}
             </div>
           )}
         </div>
@@ -244,7 +246,7 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
               <p className="text-slate-700">{req.adminNote}</p>
             </div>
           )}
-          {req.status === "pending" && (
+          {(req.status === "pending" || req.status === "rejected") && (
             <div className="flex gap-2 mt-1">
               {confirming ? (
                 <>
@@ -293,7 +295,7 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
           <p><span className="text-slate-400">Empresa:</span> {inv.invoice.companyName}</p>
           {inv.invoice.cnpj && <p><span className="text-slate-400">CNPJ:</span> {inv.invoice.cnpj}</p>}
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(inv.invoice.amount)}</span></p>
-          {inv.status === "pending" && (
+          {(inv.status === "pending" || inv.status === "rejected") && (
             <div className="flex gap-2 mt-1">
               {confirming ? (
                 <>
