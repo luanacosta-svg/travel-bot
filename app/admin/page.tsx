@@ -26,6 +26,7 @@ const REIMB_STATUS: Record<string, { label: string; color: string }> = {
 const INV_STATUS: Record<string, { label: string; color: string }> = {
   pending: { label: "Pendente", color: "bg-amber-100 text-amber-800" },
   received: { label: "Recebido ✓", color: "bg-green-100 text-green-800" },
+  rejected: { label: "Recusado", color: "bg-red-100 text-red-800" },
 };
 
 type Tab = "travels" | "reimbursements" | "invoices";
@@ -340,15 +341,16 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
 
 function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => void }) {
   const [open, setOpen] = useState(false);
+  const [note, setNote] = useState(inv.adminNote ?? "");
   const [saving, setSaving] = useState(false);
-  const s = INV_STATUS[inv.status];
+  const s = INV_STATUS[inv.status] ?? { label: inv.status, color: "bg-slate-100 text-slate-600" };
 
-  async function markReceived() {
+  async function updateStatus(status: string) {
     setSaving(true);
     await fetch(`/api/notas-fiscais/${inv.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "received" }),
+      body: JSON.stringify({ status, adminNote: note }),
     });
     setSaving(false);
     onUpdate();
@@ -377,17 +379,41 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
             <div><span className="text-slate-400">Empresa:</span> <span className="text-slate-700">{inv.invoice.companyName}</span></div>
             {inv.invoice.cnpj && <div><span className="text-slate-400">CNPJ:</span> <span className="text-slate-700">{inv.invoice.cnpj}</span></div>}
             <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(inv.invoice.amount)}</span></div>
+            <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(inv.createdAt)}</span></div>
           </div>
-          <a href={`/api/files/${inv.invoice.invoiceFile}`} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
-            📄 Ver nota fiscal
-          </a>
+
+          <div>
+            <a href={`/api/files/${inv.invoice.invoiceFile}`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
+              📄 Ver nota fiscal
+            </a>
+          </div>
+
           {inv.status === "pending" && (
-            <button onClick={markReceived} disabled={saving}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-              ✓ Confirmar recebimento
-            </button>
+            <>
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                placeholder="Observação para o solicitante (opcional)..."
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+              <div className="flex gap-2">
+                <button onClick={() => updateStatus("received")} disabled={saving}
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                  ✓ Confirmar recebimento
+                </button>
+                <button onClick={() => updateStatus("rejected")} disabled={saving}
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                  ✗ Recusar
+                </button>
+              </div>
+            </>
           )}
+
+          {inv.adminNote && inv.status !== "pending" && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
+              <p className="text-sm text-slate-700">{inv.adminNote}</p>
+            </div>
+          )}
+
           {inv.history && inv.history.length > 0 && (
             <div className="border-t border-slate-100 pt-3">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Histórico</p>

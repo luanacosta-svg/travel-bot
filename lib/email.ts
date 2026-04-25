@@ -300,6 +300,32 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
   });
 }
 
+export async function sendInvoiceStatusUpdate(req: InvoiceUpload): Promise<void> {
+  const transport = createTransport();
+  const amount = req.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const received = req.status === "received";
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${req.requester.name}</strong>!</p>
+    <p style="color:#374151;">Sua nota fiscal foi <strong>${received ? "recebida e confirmada ✓" : "recusada"}</strong>.</p>
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:16px 0;">
+      <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
+      <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
+      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+      ${req.adminNote ? `<p style="margin:8px 0 0;"><strong>Observação:</strong> ${req.adminNote}</p>` : ""}
+    </div>
+    ${received
+      ? `<p style="color:#374151;">O pagamento será processado em breve. Qualquer dúvida, entre em contato.</p>`
+      : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: req.requester.email,
+    subject: `${received ? "✓ Nota fiscal recebida" : "Nota fiscal recusada"} — ${req.invoice.description}`,
+    html: baseTemplate(`Nota fiscal ${received ? "recebida" : "recusada"} — ${req.requester.name}`, body),
+  });
+}
+
 export async function sendMonthlyReport(
   reimbursements: ReimbursementRequest[],
   invoices: InvoiceUpload[],
