@@ -190,11 +190,9 @@ function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => voi
               Sua solicitação está sendo analisada. Em breve você receberá um e-mail.
             </p>
           )}
-          {(req.status === "pending" || req.status === "rejected") && (
+          {req.status === "pending" && (
             <div className="flex gap-2">
-              {req.status === "pending" && (
-                <a href={`/solicitar?edit=${req.id}`} className="text-xs font-medium text-orange-500 hover:text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 transition">✏ Editar</a>
-              )}
+              <a href={`/solicitar?edit=${req.id}`} className="text-xs font-medium text-orange-500 hover:text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 transition">✏ Editar</a>
               {confirming ? (
                 <>
                   <button onClick={handleDelete} className="text-xs font-medium bg-red-500 text-white rounded-lg px-3 py-1.5">Confirmar exclusão</button>
