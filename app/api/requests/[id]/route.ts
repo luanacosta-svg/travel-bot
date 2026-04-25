@@ -60,8 +60,8 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
   if (!admin && (!session || session.email !== item.requester.email)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  if (!admin && item.status !== "pending" && item.status !== "rejected") {
-    return NextResponse.json({ error: "Só é possível excluir solicitações pendentes ou recusadas" }, { status: 403 });
+  if (!admin && item.status !== "pending") {
+    return NextResponse.json({ error: "Só é possível excluir solicitações pendentes" }, { status: 403 });
   }
 
   deleteRequest(id);
