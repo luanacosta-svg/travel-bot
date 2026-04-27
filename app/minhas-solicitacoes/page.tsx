@@ -240,6 +240,15 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
         <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-2 text-sm">
           <p><span className="text-slate-400">Categoria:</span> <span className="capitalize">{req.expense.category}</span></p>
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(req.expense.amount)}</span></p>
+          {req.paymentDueDate && req.status !== "paid" && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-blue-500">📅</span>
+              <div>
+                <p className="text-xs font-semibold text-blue-600">Previsão de pagamento</p>
+                <p className="text-sm text-slate-700">{new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+              </div>
+            </div>
+          )}
           {req.adminNote && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-2">
               <p className="text-xs font-semibold text-blue-600 mb-1">Observação</p>
@@ -295,6 +304,15 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
           <p><span className="text-slate-400">Empresa:</span> {inv.invoice.companyName}</p>
           {inv.invoice.cnpj && <p><span className="text-slate-400">CNPJ:</span> {inv.invoice.cnpj}</p>}
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(inv.invoice.amount)}</span></p>
+          {inv.paymentDueDate && inv.status !== "paid" && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-blue-500">📅</span>
+              <div>
+                <p className="text-xs font-semibold text-blue-600">Previsão de pagamento</p>
+                <p className="text-sm text-slate-700">{new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+              </div>
+            </div>
+          )}
           {(inv.status === "pending" || inv.status === "rejected") && (
             <div className="flex gap-2 mt-1">
               {confirming ? (

@@ -347,6 +347,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
 function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementRequest; onUpdate: () => void; nested?: boolean }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(req.adminNote ?? "");
+  const [dueDate, setDueDate] = useState(req.paymentDueDate ?? "");
   const [saving, setSaving] = useState(false);
   const s = REIMB_STATUS[req.status] ?? { label: req.status, color: "bg-slate-100 text-slate-600" };
 
@@ -355,7 +356,7 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
     await fetch(`/api/reembolso/${req.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, adminNote: note }),
+      body: JSON.stringify({ status, adminNote: note, paymentDueDate: dueDate }),
     });
     setSaving(false);
     onUpdate();
@@ -400,6 +401,12 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
                 placeholder="Observação (opcional)..."
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
 
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
+                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              </div>
+
               <div className="flex gap-2 flex-wrap">
                 <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
@@ -417,6 +424,13 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
                 )}
               </div>
             </>
+          )}
+
+          {req.paymentDueDate && req.status !== "paid" && (
+            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+              <span>📅</span>
+              <span>Previsão de pagamento: <strong>{new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
+            </div>
           )}
 
           {req.status === "paid" && (
@@ -454,6 +468,7 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
 function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => void }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(inv.adminNote ?? "");
+  const [dueDate, setDueDate] = useState(inv.paymentDueDate ?? "");
   const [saving, setSaving] = useState(false);
   const s = INV_STATUS[inv.status] ?? { label: inv.status, color: "bg-slate-100 text-slate-600" };
 
@@ -462,7 +477,7 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
     await fetch(`/api/notas-fiscais/${inv.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, adminNote: note }),
+      body: JSON.stringify({ status, adminNote: note, paymentDueDate: dueDate }),
     });
     setSaving(false);
     onUpdate();
@@ -506,6 +521,13 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
                 placeholder="Observação para o solicitante (opcional)..."
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
+                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              </div>
+
               <div className="flex gap-2 flex-wrap">
                 {inv.status === "pending" && (
                   <>
@@ -527,6 +549,13 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
                 )}
               </div>
             </>
+          )}
+
+          {inv.paymentDueDate && inv.status !== "paid" && (
+            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+              <span>📅</span>
+              <span>Previsão de pagamento: <strong>{new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
+            </div>
           )}
 
           {inv.status === "paid" && (

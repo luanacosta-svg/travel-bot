@@ -251,7 +251,12 @@ export async function sendReimbursementStatusUpdate(req: ReimbursementRequest): 
       ${req.adminNote ? `<p style="margin:0;"><strong>Observação:</strong> ${req.adminNote}</p>` : ""}
     </div>
     ${approved
-      ? `<p style="color:#374151;">O valor será processado em breve. Qualquer dúvida, entre em contato.</p>`
+      ? `${req.paymentDueDate
+          ? `<div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+               <p style="margin:0;font-weight:600;color:#1d4ed8;">📅 Previsão de pagamento</p>
+               <p style="margin:4px 0 0;color:#374151;">${new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+             </div>`
+          : `<p style="color:#374151;">O valor será processado em breve. Qualquer dúvida, entre em contato.</p>`}`
       : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
 
   await transport.sendMail({
@@ -361,7 +366,12 @@ export async function sendInvoiceStatusUpdate(req: InvoiceUpload): Promise<void>
       ${req.adminNote ? `<p style="margin:8px 0 0;"><strong>Observação:</strong> ${req.adminNote}</p>` : ""}
     </div>
     ${received
-      ? `<p style="color:#374151;">O pagamento será processado em breve. Qualquer dúvida, entre em contato.</p>`
+      ? `${req.paymentDueDate
+          ? `<div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+               <p style="margin:0;font-weight:600;color:#1d4ed8;">📅 Previsão de pagamento</p>
+               <p style="margin:4px 0 0;color:#374151;">${new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+             </div>`
+          : `<p style="color:#374151;">O pagamento será processado em breve. Qualquer dúvida, entre em contato.</p>`}`
       : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
 
   await transport.sendMail({

@@ -40,6 +40,7 @@ export interface ReimbursementRequest {
   };
   batchId?: string;
   adminNote?: string;
+  paymentDueDate?: string;
   history?: HistoryEntry[];
 }
 
@@ -56,6 +57,7 @@ export interface InvoiceUpload {
     invoiceFile: string;
   };
   adminNote?: string;
+  paymentDueDate?: string;
   history?: HistoryEntry[];
 }
 

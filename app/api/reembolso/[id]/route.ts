@@ -40,6 +40,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   if (admin) {
     if (body.status) item.status = body.status;
     if (body.adminNote !== undefined) item.adminNote = body.adminNote;
+    if (body.paymentDueDate !== undefined) item.paymentDueDate = body.paymentDueDate || undefined;
 
     if (body.status && body.status !== prevStatus) {
       if (!item.history) item.history = [];
