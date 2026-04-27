@@ -19,17 +19,20 @@ function formatCurrency(v: number) {
 }
 
 const REIMB_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "bg-amber-100 text-amber-800" },
-  approved: { label: "Aprovado ✓", color: "bg-green-100 text-green-800" },
-  rejected: { label: "Recusado", color: "bg-red-100 text-red-800" },
+  pending:  { label: "Pendente",    color: "bg-amber-100 text-amber-800" },
+  approved: { label: "Aprovado ✓",  color: "bg-blue-100 text-blue-800" },
+  rejected: { label: "Recusado",    color: "bg-red-100 text-red-800" },
+  paid:     { label: "Pago ✓",      color: "bg-green-100 text-green-800" },
 };
 const INV_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "bg-amber-100 text-amber-800" },
-  received: { label: "Recebido ✓", color: "bg-green-100 text-green-800" },
-  rejected: { label: "Recusado", color: "bg-red-100 text-red-800" },
+  pending:  { label: "Pendente",        color: "bg-amber-100 text-amber-800" },
+  received: { label: "Recebido ✓",      color: "bg-blue-100 text-blue-800" },
+  rejected: { label: "Recusado",        color: "bg-red-100 text-red-800" },
+  paid:     { label: "Pago ✓",          color: "bg-green-100 text-green-800" },
 };
 
 type Tab = "travels" | "reimbursements" | "invoices";
+type PayFilter = "all" | "topay" | "paid";
 
 function exportCSV(rows: string[][], filename: string) {
   const content = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -42,6 +45,7 @@ function exportCSV(rows: string[][], filename: string) {
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("travels");
+  const [payFilter, setPayFilter] = useState<PayFilter>("all");
   const [travels, setTravels] = useState<TravelRequest[]>([]);
   const [reimbursements, setReimbursements] = useState<ReimbursementRequest[]>([]);
   const [invoices, setInvoices] = useState<InvoiceUpload[]>([]);
@@ -68,6 +72,9 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
+  // Reset pay filter when switching tabs
+  useEffect(() => { setPayFilter("all"); }, [tab]);
+
   function matchesFilter(name: string, email: string, createdAt: string) {
     const q = search.toLowerCase();
     if (q && !name.toLowerCase().includes(q) && !email.toLowerCase().includes(q)) return false;
@@ -76,17 +83,35 @@ export default function AdminPage() {
     return true;
   }
 
-  const filteredTravels = useMemo(() => travels.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt)), [travels, search, dateFrom, dateTo]);
-  const filteredReimb = useMemo(() => reimbursements.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt)), [reimbursements, search, dateFrom, dateTo]);
-  const filteredInv = useMemo(() => invoices.filter((i) => matchesFilter(i.requester.name, i.requester.email, i.createdAt)), [invoices, search, dateFrom, dateTo]);
+  const filteredTravels = useMemo(
+    () => travels.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt)),
+    [travels, search, dateFrom, dateTo]
+  );
+
+  const filteredReimb = useMemo(() => {
+    let items = reimbursements.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt));
+    if (payFilter === "topay") items = items.filter((r) => r.status === "approved");
+    if (payFilter === "paid")  items = items.filter((r) => r.status === "paid");
+    return items;
+  }, [reimbursements, search, dateFrom, dateTo, payFilter]);
+
+  const filteredInv = useMemo(() => {
+    let items = invoices.filter((i) => matchesFilter(i.requester.name, i.requester.email, i.createdAt));
+    if (payFilter === "topay") items = items.filter((i) => i.status === "received");
+    if (payFilter === "paid")  items = items.filter((i) => i.status === "paid");
+    return items;
+  }, [invoices, search, dateFrom, dateTo, payFilter]);
 
   const reimbTotal = filteredReimb.reduce((s, r) => s + r.expense.amount, 0);
-  const invTotal = filteredInv.reduce((s, i) => s + i.invoice.amount, 0);
+  const invTotal   = filteredInv.reduce((s, i) => s + i.invoice.amount, 0);
+
+  const toPayReimb = reimbursements.filter((r) => r.status === "approved").length;
+  const toPayInv   = invoices.filter((i) => i.status === "received").length;
 
   const tabs = [
-    { key: "travels" as Tab, label: "Viagens", count: travels.length, pending: travels.filter((r) => r.status === "pending").length },
-    { key: "reimbursements" as Tab, label: "Reembolsos", count: reimbursements.length, pending: reimbursements.filter((r) => r.status === "pending").length },
-    { key: "invoices" as Tab, label: "Notas Fiscais", count: invoices.length, pending: invoices.filter((i) => i.status === "pending").length },
+    { key: "travels"        as Tab, label: "Viagens",      count: travels.length,       pending: travels.filter((r) => r.status === "pending").length },
+    { key: "reimbursements" as Tab, label: "Reembolsos",   count: reimbursements.length, pending: reimbursements.filter((r) => r.status === "pending").length },
+    { key: "invoices"       as Tab, label: "Notas Fiscais", count: invoices.length,      pending: invoices.filter((i) => i.status === "pending").length },
   ];
 
   function handleExport() {
@@ -111,6 +136,22 @@ export default function AdminPage() {
     }
   }
 
+  // Group reimbursements by batchId for PDF button
+  const reimbGroups = useMemo(() => {
+    const groups: Map<string, ReimbursementRequest[]> = new Map();
+    const singles: ReimbursementRequest[] = [];
+    for (const r of filteredReimb) {
+      if (r.batchId) {
+        const g = groups.get(r.batchId) ?? [];
+        g.push(r);
+        groups.set(r.batchId, g);
+      } else {
+        singles.push(r);
+      }
+    }
+    return { groups, singles };
+  }, [filteredReimb]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header isAdmin title="Painel Admin" />
@@ -124,6 +165,8 @@ export default function AdminPage() {
               <p className="text-3xl font-bold text-slate-800">{t.count}</p>
               <p className="text-sm font-semibold text-slate-600 mt-1">{t.label}</p>
               {t.pending > 0 && <p className="text-xs text-amber-600 mt-1 font-medium">{t.pending} pendente(s)</p>}
+              {t.key === "reimbursements" && toPayReimb > 0 && <p className="text-xs text-blue-600 mt-0.5 font-medium">{toPayReimb} a pagar</p>}
+              {t.key === "invoices" && toPayInv > 0 && <p className="text-xs text-blue-600 mt-0.5 font-medium">{toPayInv} a pagar</p>}
             </button>
           ))}
         </div>
@@ -139,7 +182,25 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Filtros */}
+        {/* Filtro A pagar / Pago — só para reembolsos e notas fiscais */}
+        {(tab === "reimbursements" || tab === "invoices") && (
+          <div className="flex gap-2 mb-4">
+            {(["all", "topay", "paid"] as PayFilter[]).map((f) => {
+              const labels: Record<PayFilter, string> = { all: "Todos", topay: "A pagar", paid: "Pagos" };
+              const counts: Record<PayFilter, number> = tab === "reimbursements"
+                ? { all: reimbursements.length, topay: toPayReimb, paid: reimbursements.filter((r) => r.status === "paid").length }
+                : { all: invoices.length,       topay: toPayInv,   paid: invoices.filter((i) => i.status === "paid").length };
+              return (
+                <button key={f} onClick={() => setPayFilter(f)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${payFilter === f ? "bg-orange-500 text-white border-orange-500" : "bg-white text-slate-600 border-slate-200 hover:border-orange-300"}`}>
+                  {labels[f]} {counts[f] > 0 && <span className="opacity-70">({counts[f]})</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Filtros de data/busca */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-48">
             <label className="block text-xs font-medium text-slate-500 mb-1">Buscar por nome ou email</label>
@@ -169,7 +230,10 @@ export default function AdminPage() {
             {tab === "reimbursements" && filteredReimb.length > 0 && (
               <span>
                 {filteredReimb.length} item(ns) · Total: <span className="font-semibold text-slate-800">{formatCurrency(reimbTotal)}</span>
-                {" · "}Aprovados: <span className="font-semibold text-green-700">{formatCurrency(filteredReimb.filter(r => r.status === "approved").reduce((s,r) => s + r.expense.amount, 0))}</span>
+                {payFilter === "all" && (
+                  <> · A pagar: <span className="font-semibold text-blue-700">{formatCurrency(reimbursements.filter(r => r.status === "approved").reduce((s,r) => s + r.expense.amount, 0))}</span>
+                   · Pagos: <span className="font-semibold text-green-700">{formatCurrency(reimbursements.filter(r => r.status === "paid").reduce((s,r) => s + r.expense.amount, 0))}</span></>
+                )}
               </span>
             )}
             {tab === "invoices" && filteredInv.length > 0 && (
@@ -218,7 +282,31 @@ export default function AdminPage() {
         {tab === "reimbursements" && !loading && (
           <div className="space-y-3">
             {filteredReimb.length === 0 && <Empty />}
-            {filteredReimb.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} />)}
+
+            {/* Lotes com batchId */}
+            {Array.from(reimbGroups.groups.entries()).map(([batchId, items]) => (
+              <div key={batchId} className="bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Lote · {items.length} despesas</span>
+                    <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
+                  </div>
+                  <a
+                    href={`/api/reembolso/pdf/${batchId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-white rounded-lg px-3 py-1.5 transition hover:bg-blue-50">
+                    📄 Gerar PDF
+                  </a>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {items.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
+                </div>
+              </div>
+            ))}
+
+            {/* Itens sem lote */}
+            {reimbGroups.singles.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} />)}
           </div>
         )}
 
@@ -256,11 +344,11 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
   );
 }
 
-function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpdate: () => void }) {
+function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementRequest; onUpdate: () => void; nested?: boolean }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(req.adminNote ?? "");
   const [saving, setSaving] = useState(false);
-  const s = REIMB_STATUS[req.status];
+  const s = REIMB_STATUS[req.status] ?? { label: req.status, color: "bg-slate-100 text-slate-600" };
 
   async function updateStatus(status: string) {
     setSaving(true);
@@ -274,8 +362,8 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
   }
 
   return (
-    <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden`}>
+      {!nested && <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />}
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -286,7 +374,7 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
             <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">· {req.expense.description}</span></p>
             <p className="text-sm text-slate-400">{req.requester.email} · {formatCurrency(req.expense.amount)} · {req.expense.date}</p>
           </div>
-          <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
+          <span className={`text-slate-300 ${nested ? "" : "pr-6"}`}>{open ? "▲" : "▼"}</span>
         </div>
       </button>
 
@@ -306,20 +394,44 @@ function ReimbursementCard({ req, onUpdate }: { req: ReimbursementRequest; onUpd
             </a>
           )}
 
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
-            placeholder="Observação (opcional)..."
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+          {req.status !== "paid" && (
+            <>
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                placeholder="Observação (opcional)..."
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
 
-          <div className="flex gap-2">
-            <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-              ✓ Aprovar
-            </button>
-            <button onClick={() => updateStatus("rejected")} disabled={saving || req.status === "rejected"}
-              className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-              ✗ Recusar
-            </button>
-          </div>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                  ✓ Aprovar
+                </button>
+                <button onClick={() => updateStatus("rejected")} disabled={saving || req.status === "rejected"}
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                  ✗ Recusar
+                </button>
+                {req.status === "approved" && (
+                  <button onClick={() => updateStatus("paid")} disabled={saving}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                    💸 Marcar como pago
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {req.status === "paid" && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-green-600 text-lg">✓</span>
+              <p className="text-sm text-green-700 font-medium">Reembolso pago</p>
+            </div>
+          )}
+
+          {req.adminNote && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
+              <p className="text-sm text-slate-700">{req.adminNote}</p>
+            </div>
+          )}
 
           {req.history && req.history.length > 0 && (
             <div className="border-t border-slate-100 pt-3">
@@ -389,25 +501,42 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
             </a>
           </div>
 
-          {inv.status === "pending" && (
+          {inv.status !== "paid" && (
             <>
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
                 placeholder="Observação para o solicitante (opcional)..."
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
-              <div className="flex gap-2">
-                <button onClick={() => updateStatus("received")} disabled={saving}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                  ✓ Confirmar recebimento
-                </button>
-                <button onClick={() => updateStatus("rejected")} disabled={saving}
-                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                  ✗ Recusar
-                </button>
+              <div className="flex gap-2 flex-wrap">
+                {inv.status === "pending" && (
+                  <>
+                    <button onClick={() => updateStatus("received")} disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                      ✓ Confirmar recebimento
+                    </button>
+                    <button onClick={() => updateStatus("rejected")} disabled={saving}
+                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                      ✗ Recusar
+                    </button>
+                  </>
+                )}
+                {inv.status === "received" && (
+                  <button onClick={() => updateStatus("paid")} disabled={saving}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+                    💰 Marcar como pago
+                  </button>
+                )}
               </div>
             </>
           )}
 
-          {inv.adminNote && inv.status !== "pending" && (
+          {inv.status === "paid" && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-green-600 text-lg">✓</span>
+              <p className="text-sm text-green-700 font-medium">Nota fiscal paga</p>
+            </div>
+          )}
+
+          {inv.adminNote && (
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
               <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
               <p className="text-sm text-slate-700">{inv.adminNote}</p>

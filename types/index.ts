@@ -1,7 +1,7 @@
 export type TravelType = "flight" | "event" | "both";
 export type RequestStatus = "pending" | "options_sent" | "purchased";
-export type ReimbursementStatus = "pending" | "approved" | "rejected";
-export type InvoiceStatus = "pending" | "received" | "rejected";
+export type ReimbursementStatus = "pending" | "approved" | "rejected" | "paid";
+export type InvoiceStatus = "pending" | "received" | "rejected" | "paid";
 
 export interface TravelRequest {
   id: string;
@@ -38,6 +38,7 @@ export interface ReimbursementRequest {
     amount: number;
     receiptFile?: string;
   };
+  batchId?: string;
   adminNote?: string;
   history?: HistoryEntry[];
 }

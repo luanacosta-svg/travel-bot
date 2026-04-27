@@ -19,14 +19,16 @@ function formatCurrency(v: number) {
 const STATUS_LABEL: Record<string, string> = {
   pending: "Em análise", options_sent: "Com opções", purchased: "Comprado ✓",
   approved: "Aprovado ✓", rejected: "Recusado", received: "Recebido ✓",
+  paid: "Pago ✓",
 };
 const STATUS_COLOR: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
   options_sent: "bg-orange-100 text-orange-700",
   purchased: "bg-green-100 text-green-800",
-  approved: "bg-green-100 text-green-800",
+  approved: "bg-blue-100 text-blue-800",
   rejected: "bg-red-100 text-red-800",
-  received: "bg-green-100 text-green-800",
+  received: "bg-blue-100 text-blue-800",
+  paid: "bg-green-100 text-green-800",
 };
 
 function exportCSV(

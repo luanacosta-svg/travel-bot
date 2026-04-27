@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const count = parseInt(String(formData.get("count") ?? "1"));
     const savedItems: ReimbursementRequest[] = [];
+    const batchId = count > 1 ? uuidv4() : undefined;
 
     for (let i = 0; i < count; i++) {
       const id = uuidv4();
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
           amount: parseFloat(String(formData.get(`amount_${i}`) ?? "0")),
           receiptFile,
         },
+        ...(batchId ? { batchId } : {}),
       };
 
       saveReimbursement(item);

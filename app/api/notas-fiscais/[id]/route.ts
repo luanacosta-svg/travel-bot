@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getInvoice, saveInvoice, deleteInvoice } from "@/lib/invoiceStore";
 import { decodeSession } from "@/lib/session";
-import { sendInvoiceStatusUpdate } from "@/lib/email";
+import { sendInvoiceStatusUpdate, sendInvoicePaidNotification } from "@/lib/email";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -40,9 +40,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
     if (body.status && body.status !== prevStatus) {
       if (!item.history) item.history = [];
-      const label = body.status === "received" ? "Recebido" : body.status === "rejected" ? "Recusado" : body.status;
+      const label = body.status === "received" ? "Recebido" : body.status === "rejected" ? "Recusado" : body.status === "paid" ? "Pago" : body.status;
       item.history.push({ date: new Date().toISOString(), action: label, by: "Admin" });
-      sendInvoiceStatusUpdate(item).catch((e) => console.error("Email error:", e));
+      if (body.status === "paid") {
+        sendInvoicePaidNotification(item).catch((e) => console.error("Email error:", e));
+      } else {
+        sendInvoiceStatusUpdate(item).catch((e) => console.error("Email error:", e));
+      }
     }
   }
 

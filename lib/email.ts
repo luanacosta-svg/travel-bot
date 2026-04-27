@@ -262,6 +262,28 @@ export async function sendReimbursementStatusUpdate(req: ReimbursementRequest): 
   });
 }
 
+export async function sendReimbursementPaidNotification(req: ReimbursementRequest): Promise<void> {
+  const transport = createTransport();
+  const amount = req.expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${req.requester.name}</strong>!</p>
+    <p style="color:#374151;">O pagamento do seu reembolso foi <strong>realizado ✓</strong>.</p>
+    <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+      <p style="margin:0 0 8px;font-weight:600;color:#15803d;">💸 Pagamento efetuado</p>
+      <p style="margin:0 0 6px;"><strong>Descrição:</strong> ${req.expense.description}</p>
+      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+    </div>
+    <p style="color:#374151;">Qualquer dúvida, entre em contato com a equipe.</p>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: req.requester.email,
+    subject: `💸 Reembolso pago — ${req.expense.description}`,
+    html: baseTemplate(`Reembolso pago — ${req.requester.name}`, body),
+  });
+}
+
 export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void> {
   const transport = createTransport();
   const amount = req.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -297,6 +319,30 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
     subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
     html: baseTemplate(`Nota fiscal enviada — ${req.requester.name}`, body),
     attachments,
+  });
+}
+
+export async function sendInvoicePaidNotification(req: InvoiceUpload): Promise<void> {
+  const transport = createTransport();
+  const amount = req.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${req.requester.name}</strong>!</p>
+    <p style="color:#374151;">O pagamento da sua nota fiscal foi <strong>realizado ✓</strong>.</p>
+    <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+      <p style="margin:0 0 8px;font-weight:600;color:#15803d;">💰 Pagamento efetuado</p>
+      <p style="margin:0 0 6px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
+      <p style="margin:0 0 6px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
+      <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
+    </div>
+    <p style="color:#374151;">Qualquer dúvida, entre em contato com a equipe.</p>`;
+
+  await transport.sendMail({
+    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    to: req.requester.email,
+    cc: process.env.MANAGER_EMAIL,
+    subject: `💰 Nota fiscal paga — ${req.invoice.description}`,
+    html: baseTemplate(`Nota fiscal paga — ${req.requester.name}`, body),
   });
 }
 
