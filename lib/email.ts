@@ -27,7 +27,7 @@ function baseTemplate(title: string, body: string): string {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);">
         <tr>
           <td style="background:#2563eb;padding:24px 32px;">
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">✈ 49 Educação · Viagens</h1>
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">49Pay · 49 Educação</h1>
           </td>
         </tr>
         <tr>
@@ -35,7 +35,7 @@ function baseTemplate(title: string, body: string): string {
             <h2 style="margin:0 0 20px;color:#1e293b;font-size:18px;">${title}</h2>
             ${body}
             <p style="margin:32px 0 0;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px;">
-              49 Educação · Sistema de Solicitação de Viagens
+              49Pay · 49 Educação
             </p>
           </td>
         </tr>
@@ -93,7 +93,7 @@ export async function sendNewRequestNotification(req: TravelRequest): Promise<vo
     </div>`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: requester.email,
     subject: `[Nova solicitação] ${requester.name} → ${travel.destination}`,
@@ -125,7 +125,7 @@ export async function sendOptionsToRequester(
   }
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `Sua solicitação de viagem — ${req.travel.destination} ✈`,
     html: baseTemplate(`Atualização da sua viagem — ${req.travel.destination}`, body),
@@ -157,7 +157,7 @@ export async function sendPurchaseConfirmation(req: TravelRequest, attachFile?: 
   }
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `✓ Viagem confirmada — ${req.travel.destination}`,
     html: baseTemplate(`Viagem confirmada — ${req.travel.destination}`, body),
@@ -228,7 +228,7 @@ export async function sendReimbursementBatchNotification(items: ReimbursementReq
     : `[Reembolso] ${requester.name} · ${items.length} despesas · ${totalFmt}`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: requester.email,
     subject,
@@ -260,7 +260,7 @@ export async function sendReimbursementStatusUpdate(req: ReimbursementRequest): 
       : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `${approved ? "✓ Reembolso aprovado" : "Reembolso recusado"} — ${req.expense.description}`,
     html: baseTemplate(`Reembolso ${approved ? "aprovado" : "recusado"} — ${req.requester.name}`, body),
@@ -282,7 +282,7 @@ export async function sendReimbursementPaidNotification(req: ReimbursementReques
     <p style="color:#374151;">Qualquer dúvida, entre em contato com a equipe.</p>`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     subject: `💸 Reembolso pago — ${req.expense.description}`,
     html: baseTemplate(`Reembolso pago — ${req.requester.name}`, body),
@@ -318,7 +318,7 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
   }
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: req.requester.email,
     subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
@@ -343,7 +343,7 @@ export async function sendInvoicePaidNotification(req: InvoiceUpload): Promise<v
     <p style="color:#374151;">Qualquer dúvida, entre em contato com a equipe.</p>`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     cc: process.env.MANAGER_EMAIL,
     subject: `💰 Nota fiscal paga — ${req.invoice.description}`,
@@ -375,7 +375,7 @@ export async function sendInvoiceStatusUpdate(req: InvoiceUpload): Promise<void>
       : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
     cc: process.env.MANAGER_EMAIL,
     subject: `${received ? "✓ Nota fiscal recebida" : "Nota fiscal recusada"} — ${req.invoice.description}`,
@@ -460,7 +460,7 @@ export async function sendMonthlyReport(
     </div>`;
 
   await transport.sendMail({
-    from: `"49 Educação Viagens" <${process.env.GMAIL_USER}>`,
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     subject: `[Relatório Mensal] ${monthName} · Total ${fmt(grandTotal)}`,
     html: baseTemplate(`Relatório de ${monthName}`, body),

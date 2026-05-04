@@ -35,8 +35,8 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <a href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
-            <img src="/logo-49.png" alt="49 Educação" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="font-bold text-slate-800">49 Educação</span>
+            <img src="/logo-49.png" alt="49Pay" className="h-8 w-8 rounded-lg object-cover" />
+            <span className="font-bold text-slate-800">49Pay</span>
           </a>
           {title && <span className="text-slate-400 text-sm">/ {title}</span>}
         </div>

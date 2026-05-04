@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
   // Cabeçalho
   page.drawRectangle({ x: 0, y: height - 72, width, height: 72, color: rgb(0.145, 0.388, 0.922) });
-  page.drawText("49 Educação · Viagens", { x: margin, y: height - 44, size: 18, font: fontBold, color: rgb(1, 1, 1) });
+  page.drawText("49Pay · 49 Educação", { x: margin, y: height - 44, size: 18, font: fontBold, color: rgb(1, 1, 1) });
   page.drawText("Relatório de Reembolso", { x: margin, y: height - 64, size: 11, font: fontRegular, color: rgb(0.8, 0.87, 1) });
 
   y = height - 100;

@@ -48,10 +48,10 @@ function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-4">
-            <span className="text-3xl">✈</span>
+            <span className="text-3xl font-bold text-white">49</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">49 Educação</h1>
-          <p className="text-orange-200 mt-1">Sistema de Viagens</p>
+          <h1 className="text-3xl font-bold text-white">49Pay</h1>
+          <p className="text-orange-200 mt-1">Reembolsos, NFs e viagens</p>
         </div>
 
         {/* Card */}

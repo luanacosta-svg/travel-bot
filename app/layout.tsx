@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "49 Educação · Viagens",
-  description: "Sistema de solicitação de viagens, reembolsos e notas fiscais",
+  title: "49Pay",
+  description: "Reembolsos, notas fiscais e solicitações de viagem — 49 Educação",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Viagens 49",
+    title: "49Pay",
   },
   icons: {
     apple: "/logo-49.png",
