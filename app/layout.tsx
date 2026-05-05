@@ -11,7 +11,8 @@ export const metadata: Metadata = {
     title: "49Pay",
   },
   icons: {
-    apple: "/logo-49.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
