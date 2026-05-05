@@ -349,7 +349,17 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
   const [note, setNote] = useState(req.adminNote ?? "");
   const [dueDate, setDueDate] = useState(req.paymentDueDate ?? "");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const s = REIMB_STATUS[req.status] ?? { label: req.status, color: "bg-slate-100 text-slate-600" };
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    await fetch(`/api/reembolso/${req.id}/upload`, { method: "POST", body: fd });
+    setUploading(false);
+    onUpdate();
+  }
 
   async function updateStatus(status: string) {
     setSaving(true);
@@ -388,12 +398,20 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
             <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(req.createdAt)}</span></div>
           </div>
 
-          {req.expense.receiptFile && (
-            <a href={`/api/files/${req.expense.receiptFile}`} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
-              📎 Ver comprovante
-            </a>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {req.expense.receiptFile && (
+              <a href={`/api/files/${req.expense.receiptFile}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
+                📎 Ver comprovante
+              </a>
+            )}
+            <label className={`inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer border rounded-lg px-3 py-1.5 transition ${uploading ? "text-slate-400 border-slate-200" : "text-blue-600 border-blue-200 hover:bg-blue-50"}`}>
+              {uploading ? "Enviando..." : req.expense.receiptFile ? "🔄 Substituir comprovante" : "📎 Anexar comprovante"}
+              <input type="file" accept="image/*,.pdf" className="hidden"
+                disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+            </label>
+          </div>
 
           {req.status !== "paid" && (
             <>
