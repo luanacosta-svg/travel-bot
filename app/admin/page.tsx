@@ -34,6 +34,48 @@ const INV_STATUS: Record<string, { label: string; color: string }> = {
 type Tab = "travels" | "reimbursements" | "invoices";
 type PayFilter = "all" | "topay" | "paid";
 
+const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+function getMonthKey(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function getMonthLabel(key: string) {
+  const [year, month] = key.split("-");
+  return `${MONTH_NAMES[parseInt(month) - 1]} ${year}`;
+}
+function groupByMonth<T extends { createdAt: string }>(items: T[]): { key: string; label: string; items: T[] }[] {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const k = getMonthKey(item.createdAt);
+    const g = map.get(k) ?? [];
+    g.push(item);
+    map.set(k, g);
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, items]) => ({ key, label: getMonthLabel(key), items }));
+}
+
+function MonthSection({ label, count, total, defaultOpen, children }: {
+  label: string; count: number; total?: string; defaultOpen: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-3 bg-slate-50 hover:bg-slate-100 transition">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-slate-700">📅 {label}</span>
+          <span className="text-xs text-slate-400">{count} item{count !== 1 ? "s" : ""}{total ? ` · ${total}` : ""}</span>
+        </div>
+        <span className="text-slate-400 text-sm">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && <div className="divide-y divide-slate-100">{children}</div>}
+    </div>
+  );
+}
+
 function exportCSV(rows: string[][], filename: string) {
   const content = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
@@ -257,23 +299,27 @@ export default function AdminPage() {
         {tab === "travels" && !loading && (
           <div className="space-y-3">
             {filteredTravels.length === 0 && <Empty />}
-            {filteredTravels.map((req) => (
-              <div key={req.id} className="relative bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group">
-                <a href={`/admin/solicitacao/${req.id}`} className="block p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <StatusBadge status={req.status} />
-                        <span className="text-xs text-slate-400">{req.travel.type === "flight" ? "✈ Passagem" : req.travel.type === "event" ? "🎟 Ingresso" : "✈🎟 Ambos"}</span>
+            {groupByMonth(filteredTravels).map((group, gi) => (
+              <MonthSection key={group.key} label={group.label} count={group.items.length} defaultOpen={gi === 0}>
+                {group.items.map((req) => (
+                  <div key={req.id} className="relative bg-white hover:bg-slate-50 transition-all group">
+                    <a href={`/admin/solicitacao/${req.id}`} className="block px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <StatusBadge status={req.status} />
+                            <span className="text-xs text-slate-400">{req.travel.type === "flight" ? "✈ Passagem" : req.travel.type === "event" ? "🎟 Ingresso" : "✈🎟 Ambos"}</span>
+                          </div>
+                          <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">→ {req.travel.destination}{req.travel.eventName ? ` · ${req.travel.eventName}` : ""}</span></p>
+                          <p className="text-sm text-slate-400 mt-0.5">{req.requester.email}{req.travel.departureDate ? ` · ${req.travel.departureDate}` : ""} · {formatDate(req.createdAt)}</p>
+                        </div>
+                        <span className="text-slate-300 group-hover:text-orange-400 transition mt-1 pr-6">→</span>
                       </div>
-                      <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">→ {req.travel.destination}{req.travel.eventName ? ` · ${req.travel.eventName}` : ""}</span></p>
-                      <p className="text-sm text-slate-400 mt-0.5">{req.requester.email}{req.travel.departureDate ? ` · ${req.travel.departureDate}` : ""} · {formatDate(req.createdAt)}</p>
-                    </div>
-                    <span className="text-slate-300 group-hover:text-orange-400 transition mt-1 pr-6">→</span>
+                    </a>
+                    <DeleteButton onDelete={async () => { await fetch(`/api/requests/${req.id}`, { method: "DELETE" }); fetchAll(); }} />
                   </div>
-                </a>
-                <DeleteButton onDelete={async () => { await fetch(`/api/requests/${req.id}`, { method: "DELETE" }); fetchAll(); }} />
-              </div>
+                ))}
+              </MonthSection>
             ))}
           </div>
         )}
@@ -282,31 +328,40 @@ export default function AdminPage() {
         {tab === "reimbursements" && !loading && (
           <div className="space-y-3">
             {filteredReimb.length === 0 && <Empty />}
-
-            {/* Lotes com batchId */}
-            {Array.from(reimbGroups.groups.entries()).map(([batchId, items]) => (
-              <div key={batchId} className="bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Lote · {items.length} despesas</span>
-                    <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
-                  </div>
-                  <a
-                    href={`/api/reembolso/pdf/${batchId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-white rounded-lg px-3 py-1.5 transition hover:bg-blue-50">
-                    📄 Gerar PDF
-                  </a>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {items.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
-                </div>
-              </div>
-            ))}
-
-            {/* Itens sem lote */}
-            {reimbGroups.singles.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} />)}
+            {groupByMonth(filteredReimb).map((group, gi) => {
+              const monthTotal = formatCurrency(group.items.reduce((s, r) => s + r.expense.amount, 0));
+              // grupos por batch dentro do mês
+              const batchMap = new Map<string, ReimbursementRequest[]>();
+              const singles: ReimbursementRequest[] = [];
+              for (const r of group.items) {
+                if (r.batchId) { const g = batchMap.get(r.batchId) ?? []; g.push(r); batchMap.set(r.batchId, g); }
+                else singles.push(r);
+              }
+              return (
+                <MonthSection key={group.key} label={group.label} count={group.items.length} total={monthTotal} defaultOpen={gi === 0}>
+                  {/* Lotes */}
+                  {Array.from(batchMap.entries()).map(([batchId, items]) => (
+                    <div key={batchId} className="border-b border-slate-100 last:border-0">
+                      <div className="px-5 py-2.5 bg-blue-50 flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Lote · {items.length} despesas</span>
+                          <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
+                        </div>
+                        <a href={`/api/reembolso/pdf/${batchId}`} target="_blank" rel="noopener noreferrer"
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-white rounded-lg px-3 py-1 transition hover:bg-blue-50">
+                          📄 Gerar PDF
+                        </a>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                        {items.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Individuais */}
+                  {singles.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
+                </MonthSection>
+              );
+            })}
           </div>
         )}
 
@@ -314,7 +369,14 @@ export default function AdminPage() {
         {tab === "invoices" && !loading && (
           <div className="space-y-3">
             {filteredInv.length === 0 && <Empty />}
-            {filteredInv.map((inv) => <InvoiceCard key={inv.id} inv={inv} onUpdate={fetchAll} />)}
+            {groupByMonth(filteredInv).map((group, gi) => {
+              const monthTotal = formatCurrency(group.items.reduce((s, i) => s + i.invoice.amount, 0));
+              return (
+                <MonthSection key={group.key} label={group.label} count={group.items.length} total={monthTotal} defaultOpen={gi === 0}>
+                  {group.items.map((inv) => <InvoiceCard key={inv.id} inv={inv} onUpdate={fetchAll} nested />)}
+                </MonthSection>
+              );
+            })}
           </div>
         )}
       </main>
@@ -483,7 +545,7 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
   );
 }
 
-function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => void }) {
+function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: () => void; nested?: boolean }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(inv.adminNote ?? "");
   const [dueDate, setDueDate] = useState(inv.paymentDueDate ?? "");
@@ -502,7 +564,7 @@ function InvoiceCard({ inv, onUpdate }: { inv: InvoiceUpload; onUpdate: () => vo
   }
 
   return (
-    <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden`}>
       <DeleteButton onDelete={async () => { await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" }); onUpdate(); }} />
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
