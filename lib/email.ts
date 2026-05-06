@@ -262,6 +262,7 @@ export async function sendReimbursementStatusUpdate(req: ReimbursementRequest): 
   await transport.sendMail({
     from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
+    cc: process.env.MANAGER_EMAIL,
     subject: `${approved ? "✓ Reembolso aprovado" : "Reembolso recusado"} — ${req.expense.description}`,
     html: baseTemplate(`Reembolso ${approved ? "aprovado" : "recusado"} — ${req.requester.name}`, body),
   });
@@ -284,6 +285,7 @@ export async function sendReimbursementPaidNotification(req: ReimbursementReques
   await transport.sendMail({
     from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: req.requester.email,
+    cc: process.env.MANAGER_EMAIL,
     subject: `💸 Reembolso pago — ${req.expense.description}`,
     html: baseTemplate(`Reembolso pago — ${req.requester.name}`, body),
   });
