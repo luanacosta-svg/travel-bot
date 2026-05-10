@@ -265,11 +265,16 @@ export default function BemVindoPage() {
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5">
               <p className="text-sm text-amber-800 font-medium">📬 Dúvidas sobre ativação dos benefícios?</p>
               <p className="text-sm text-amber-700 mt-1">
-                Fale com o time de Pessoas pelo e-mail{" "}
-                <a href="mailto:pessoas@49educacao.com.br" className="font-semibold underline hover:text-amber-900 transition">
-                  pessoas@49educacao.com.br
+                Fale com a Luana Costa pelo WhatsApp:{" "}
+                <a
+                  href="https://wa.me/5548996843058"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline hover:text-amber-900 transition"
+                >
+                  (48) 99684-3058
                 </a>{" "}
-                — eles vão te ajudar a ativar e configurar cada benefício.
+                — ela vai te ajudar a ativar e configurar cada benefício.
               </p>
             </div>
           </div>
@@ -521,8 +526,13 @@ export default function BemVindoPage() {
           </p>
           <p className="text-xs text-slate-400">
             Dúvidas?{" "}
-            <a href="mailto:pessoas@49educacao.com.br" className="text-orange-500 hover:text-orange-600 font-medium transition">
-              pessoas@49educacao.com.br
+            <a
+              href="https://wa.me/5548996843058"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-500 hover:text-orange-600 font-medium transition"
+            >
+              Fale com a Luana no WhatsApp
             </a>
           </p>
         </footer>
