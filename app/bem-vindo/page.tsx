@@ -82,12 +82,17 @@ export default function BemVindoPage() {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [activeTourStep, setActiveTourStep] = useState<number | null>(null);
 
+  function goTo(tab: Tab) {
+    setActiveTab(tab);
+    window.history.replaceState(null, "", tab === "home" ? "/bem-vindo" : `/bem-vindo#${tab}`);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button onClick={() => setActiveTab("home")} className="flex items-center gap-2">
+          <button onClick={() => goTo("home")} className="flex items-center gap-2">
             <Image src="/logo-49.png" alt="49Pay" width={32} height={32} className="rounded-lg object-cover" />
             <span className="font-bold text-slate-800">49Pay</span>
           </button>
@@ -96,7 +101,7 @@ export default function BemVindoPage() {
             {TABS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => goTo(tab.id)}
                 className={`px-3 py-1.5 rounded-lg font-medium transition ${
                   activeTab === tab.id
                     ? "bg-orange-50 text-orange-600"
@@ -113,7 +118,7 @@ export default function BemVindoPage() {
             {TABS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => goTo(tab.id)}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
                   activeTab === tab.id
                     ? "bg-orange-50 text-orange-600"
@@ -153,7 +158,7 @@ export default function BemVindoPage() {
                   Acessar o 49Pay →
                 </a>
                 <button
-                  onClick={() => setActiveTab("guia")}
+                  onClick={() => goTo("guia")}
                   className="inline-block bg-orange-400 hover:bg-orange-300 text-white font-semibold px-6 py-3 rounded-xl transition text-sm text-center"
                 >
                   Ver guia rápido
@@ -171,7 +176,7 @@ export default function BemVindoPage() {
               ].map((c) => (
                 <button
                   key={c.tab}
-                  onClick={() => setActiveTab(c.tab)}
+                  onClick={() => goTo(c.tab)}
                   className="bg-white border border-slate-200 rounded-2xl p-5 text-left hover:border-orange-400 hover:bg-orange-50 transition group"
                 >
                   <span className="text-2xl">{c.icon}</span>
