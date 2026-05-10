@@ -74,7 +74,7 @@ export default function ReembolsoPage() {
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Reembolso" />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Solicitar reembolso</h1>
           <p className="text-slate-500 text-sm mt-1">Adicione uma ou mais despesas de uma vez.</p>

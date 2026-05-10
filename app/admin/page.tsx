@@ -197,7 +197,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header isAdmin title="Painel Admin" />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">

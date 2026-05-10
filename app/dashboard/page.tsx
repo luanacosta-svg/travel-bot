@@ -76,7 +76,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Início" />
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {/* Boas-vindas */}
         <div className="bg-orange-500 rounded-2xl p-6 text-white">
           <p className="text-orange-100 text-sm mb-1">Olá, {firstName}! 👋</p>

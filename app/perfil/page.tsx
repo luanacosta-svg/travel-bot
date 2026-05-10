@@ -42,7 +42,7 @@ export default function PerfilPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Perfil" />
-      <main className="max-w-md mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-slate-800 mb-1">Meu perfil</h1>
         <p className="text-slate-500 text-sm mb-6">Seus dados são preenchidos automaticamente nos formulários.</p>
 

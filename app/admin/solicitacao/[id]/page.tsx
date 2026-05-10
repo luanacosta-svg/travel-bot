@@ -93,7 +93,7 @@ export default function RequestDetailPage() {
     <div className="min-h-screen bg-slate-50">
       <Header isAdmin title="Solicitação" />
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-3">
           <button onClick={() => router.push("/admin")} className="text-slate-400 hover:text-slate-600 text-sm">
             ← Voltar

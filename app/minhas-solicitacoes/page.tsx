@@ -382,7 +382,7 @@ function Content() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Minhas solicitações" />
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         {novo && (
           <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
             <span className="text-2xl">✅</span>
