@@ -41,6 +41,19 @@ export default function DashboardPage() {
   const pendingInv = invoices.filter((i) => i.status === "pending").length;
   const totalPending = pendingTravels + pendingReimb + pendingInv;
 
+  // Totais financeiros
+  const totalPagoReimb = reimbursements
+    .filter((r) => r.status === "paid")
+    .reduce((s, r) => s + r.expense.amount, 0);
+  const totalPagoInv = invoices
+    .filter((i) => i.status === "paid")
+    .reduce((s, i) => s + i.invoice.amount, 0);
+  const totalAPagar = reimbursements
+    .filter((r) => r.status === "approved")
+    .reduce((s, r) => s + r.expense.amount, 0)
+    + invoices.filter((i) => i.status === "received")
+      .reduce((s, i) => s + i.invoice.amount, 0);
+
   const [activityFilter, setActivityFilter] = useState<"all" | "travel" | "reimb" | "inv">("all");
 
   const allItems = useMemo(() => [
@@ -57,19 +70,21 @@ export default function DashboardPage() {
   const statusLabel: Record<string, string> = {
     pending: "Em análise",
     options_sent: "Com opções",
-    purchased: "Comprado",
-    approved: "Aprovado",
+    purchased: "Comprado ✓",
+    approved: "Aprovado ✓",
     rejected: "Recusado",
-    received: "Recebido",
+    received: "Recebido ✓",
+    paid: "Pago ✓",
   };
 
   const statusColor: Record<string, string> = {
     pending: "bg-amber-100 text-amber-700",
     options_sent: "bg-orange-100 text-orange-700",
     purchased: "bg-green-100 text-green-700",
-    approved: "bg-green-100 text-green-700",
+    approved: "bg-blue-100 text-blue-700",
     rejected: "bg-red-100 text-red-700",
-    received: "bg-green-100 text-green-700",
+    received: "bg-blue-100 text-blue-700",
+    paid: "bg-green-100 text-green-700",
   };
 
   return (
@@ -79,10 +94,14 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {/* Boas-vindas */}
         <div className="bg-orange-500 rounded-2xl p-6 text-white">
-          <p className="text-orange-100 text-sm mb-1">Olá, {firstName}! 👋</p>
-          <h1 className="text-2xl font-bold">Sistema de Gestão</h1>
+          <p className="text-orange-100 text-sm mb-1">Olá, {firstName || "…"}! 👋</p>
+          <h1 className="text-2xl font-bold">49Pay</h1>
           <p className="text-orange-100 text-sm mt-1">
-            {totalPending > 0 ? `${totalPending} solicitação(ões) em análise` : "Tudo em dia!"}
+            {totalPending > 0
+              ? `${totalPending} solicitação(ões) em análise`
+              : totalAPagar > 0
+              ? `${formatCurrency(totalAPagar)} a receber em breve`
+              : "Tudo em dia!"}
           </p>
         </div>
 
@@ -105,7 +124,28 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Stats */}
+        {/* Resumo financeiro */}
+        {!loading && (reimbursements.length > 0 || invoices.length > 0) && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">A receber</p>
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(totalAPagar)}</p>
+              <p className="text-xs text-slate-400 mt-0.5">aprovados/confirmados</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Reembolsos pagos</p>
+              <p className="text-xl font-bold text-green-600">{formatCurrency(totalPagoReimb)}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{reimbursements.filter(r => r.status === "paid").length} pagamento(s)</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">NFs pagas</p>
+              <p className="text-xl font-bold text-green-600">{formatCurrency(totalPagoInv)}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{invoices.filter(i => i.status === "paid").length} nota(s) fiscal(is)</p>
+            </div>
+          </div>
+        )}
+
+        {/* Stats de contagem */}
         {!loading && (travels.length > 0 || reimbursements.length > 0 || invoices.length > 0) && (
           <div className="grid grid-cols-3 gap-3">
             {[

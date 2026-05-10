@@ -199,6 +199,42 @@ export default function AdminPage() {
       <Header isAdmin title="Painel Admin" />
       <main className="max-w-5xl mx-auto px-4 py-8">
 
+        {/* Resumo financeiro global */}
+        {!loading && (
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Pendente de aprovação</p>
+              <p className="text-xl font-bold text-amber-700">
+                {formatCurrency(
+                  reimbursements.filter(r => r.status === "pending").reduce((s, r) => s + r.expense.amount, 0) +
+                  invoices.filter(i => i.status === "pending").reduce((s, i) => s + i.invoice.amount, 0)
+                )}
+              </p>
+              <p className="text-xs text-amber-500 mt-0.5">{reimbursements.filter(r => r.status === "pending").length + invoices.filter(i => i.status === "pending").length} item(ns)</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">A pagar</p>
+              <p className="text-xl font-bold text-blue-700">
+                {formatCurrency(
+                  reimbursements.filter(r => r.status === "approved").reduce((s, r) => s + r.expense.amount, 0) +
+                  invoices.filter(i => i.status === "received").reduce((s, i) => s + i.invoice.amount, 0)
+                )}
+              </p>
+              <p className="text-xs text-blue-500 mt-0.5">{toPayReimb + toPayInv} item(ns) aprovados</p>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Total pago</p>
+              <p className="text-xl font-bold text-green-700">
+                {formatCurrency(
+                  reimbursements.filter(r => r.status === "paid").reduce((s, r) => s + r.expense.amount, 0) +
+                  invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.invoice.amount, 0)
+                )}
+              </p>
+              <p className="text-xs text-green-500 mt-0.5">{reimbursements.filter(r => r.status === "paid").length + invoices.filter(i => i.status === "paid").length} pagamento(s) realizados</p>
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {tabs.map((t) => (
@@ -279,7 +315,13 @@ export default function AdminPage() {
               </span>
             )}
             {tab === "invoices" && filteredInv.length > 0 && (
-              <span>{filteredInv.length} item(ns) · Total: <span className="font-semibold text-slate-800">{formatCurrency(invTotal)}</span></span>
+              <span>
+                {filteredInv.length} item(ns) · Total: <span className="font-semibold text-slate-800">{formatCurrency(invTotal)}</span>
+                {payFilter === "all" && (
+                  <> · A pagar: <span className="font-semibold text-blue-700">{formatCurrency(invoices.filter(i => i.status === "received").reduce((s, i) => s + i.invoice.amount, 0))}</span>
+                   · Pagas: <span className="font-semibold text-green-700">{formatCurrency(invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.invoice.amount, 0))}</span></>
+                )}
+              </span>
             )}
             {tab === "travels" && filteredTravels.length > 0 && (
               <span>{filteredTravels.length} solicitação(ões)</span>
@@ -446,6 +488,9 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
             </div>
             <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">· {req.expense.description}</span></p>
             <p className="text-sm text-slate-400">{req.requester.email} · {formatCurrency(req.expense.amount)} · {req.expense.date}</p>
+            {req.paymentDueDate && (
+              <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+            )}
           </div>
           <span className={`text-slate-300 ${nested ? "" : "pr-6"}`}>{open ? "▲" : "▼"}</span>
         </div>
@@ -575,6 +620,9 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
             </div>
             <p className="font-semibold text-slate-800">{inv.requester.name} <span className="font-normal text-slate-400 text-sm">· {inv.invoice.description}</span></p>
             <p className="text-sm text-slate-400">{inv.invoice.companyName} · {formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
+            {inv.paymentDueDate && (
+              <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+            )}
           </div>
           <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
         </div>

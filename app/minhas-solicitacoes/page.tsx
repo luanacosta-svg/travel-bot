@@ -16,6 +16,26 @@ function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function getMonthKey(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function getMonthLabel(key: string) {
+  const [year, month] = key.split("-");
+  return `${MONTH_NAMES[parseInt(month) - 1]} ${year}`;
+}
+function groupByMonth<T extends { createdAt: string }>(items: T[]) {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const k = getMonthKey(item.createdAt);
+    map.set(k, [...(map.get(k) ?? []), item]);
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, items]) => ({ key, label: getMonthLabel(key), items }));
+}
+
 const STATUS_LABEL: Record<string, string> = {
   pending: "Em análise", options_sent: "Com opções", purchased: "Comprado ✓",
   approved: "Aprovado ✓", rejected: "Recusado", received: "Recebido ✓",
@@ -60,7 +80,7 @@ function exportCSV(
     STATUS_LABEL[i.status] ?? i.status,
   ]));
   const content = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["﻿" + content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = `minhas-solicitacoes.csv`; a.click();
@@ -139,6 +159,16 @@ function printReport(
 
   const win = window.open("", "_blank");
   if (win) { win.document.write(html); win.document.close(); }
+}
+
+function MonthLabel({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 px-1 pt-4 pb-1 first:pt-0">
+      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+      <span className="text-xs text-slate-300">({count})</span>
+      <div className="flex-1 h-px bg-slate-200" />
+    </div>
+  );
 }
 
 function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => void }) {
@@ -229,6 +259,11 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${sc}`}>{s}</span>
               <span className="text-xs text-slate-400">💸 Reembolso</span>
+              {req.paymentDueDate && req.status !== "paid" && (
+                <span className="text-xs text-blue-500 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                  📅 {new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}
+                </span>
+              )}
             </div>
             <p className="font-semibold text-slate-800 truncate">{req.expense.description}</p>
             <p className="text-sm text-slate-400 mt-0.5">{formatCurrency(req.expense.amount)} · {req.expense.date} · {formatDate(req.createdAt)}</p>
@@ -247,6 +282,12 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
                 <p className="text-xs font-semibold text-blue-600">Previsão de pagamento</p>
                 <p className="text-sm text-slate-700">{new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
               </div>
+            </div>
+          )}
+          {req.status === "paid" && (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-green-500 text-lg">✓</span>
+              <p className="text-sm text-green-700 font-medium">Reembolso pago!</p>
             </div>
           )}
           {req.adminNote && (
@@ -292,6 +333,11 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${sc}`}>{s}</span>
               <span className="text-xs text-slate-400">🧾 Nota Fiscal</span>
+              {inv.paymentDueDate && inv.status !== "paid" && (
+                <span className="text-xs text-blue-500 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                  📅 {new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}
+                </span>
+              )}
             </div>
             <p className="font-semibold text-slate-800 truncate">{inv.invoice.description}</p>
             <p className="text-sm text-slate-400 mt-0.5">{inv.invoice.companyName} · {formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
@@ -311,6 +357,12 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
                 <p className="text-xs font-semibold text-blue-600">Previsão de pagamento</p>
                 <p className="text-sm text-slate-700">{new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
               </div>
+            </div>
+          )}
+          {inv.status === "paid" && (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-green-500 text-lg">✓</span>
+              <p className="text-sm text-green-700 font-medium">Nota fiscal paga!</p>
             </div>
           )}
           {(inv.status === "pending" || inv.status === "rejected") && (
@@ -379,6 +431,41 @@ function Content() {
 
   const hasData = travels.length > 0 || reimbursements.length > 0 || invoices.length > 0;
 
+  const travelGroups = groupByMonth(travels);
+  const reimbGroups = groupByMonth(reimbursements);
+  const invGroups = groupByMonth(invoices);
+
+  function renderTravels(items: TravelRequest[]) {
+    return groupByMonth(items).map((group) => (
+      <div key={group.key}>
+        <MonthLabel label={group.label} count={group.items.length} />
+        <div className="space-y-2">
+          {group.items.map((r) => <TravelCard key={r.id} req={r} onDelete={refresh} />)}
+        </div>
+      </div>
+    ));
+  }
+  function renderReimbs(items: ReimbursementRequest[]) {
+    return groupByMonth(items).map((group) => (
+      <div key={group.key}>
+        <MonthLabel label={group.label} count={group.items.length} />
+        <div className="space-y-2">
+          {group.items.map((r) => <ReimbursementCard key={r.id} req={r} onDelete={refresh} />)}
+        </div>
+      </div>
+    ));
+  }
+  function renderInvoices(items: InvoiceUpload[]) {
+    return groupByMonth(items).map((group) => (
+      <div key={group.key}>
+        <MonthLabel label={group.label} count={group.items.length} />
+        <div className="space-y-2">
+          {group.items.map((i) => <InvoiceCard key={i.id} inv={i} onDelete={refresh} />)}
+        </div>
+      </div>
+    ));
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header user={user ?? undefined} title="Minhas solicitações" />
@@ -428,22 +515,54 @@ function Content() {
 
         {loading && <div className="text-center py-12 text-slate-400">Carregando...</div>}
 
-        {!loading && (tab === "all" || tab === "travels") && travels.length > 0 && (
-          <div className="space-y-3 mb-3">
-            {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1">Viagens</p>}
-            {travels.map((r) => <TravelCard key={r.id} req={r} onDelete={refresh} />)}
+        {/* Tab: Tudo */}
+        {!loading && tab === "all" && (
+          <div className="space-y-6">
+            {travels.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">✈ Viagens</p>
+                <div className="space-y-1">{renderTravels(travels)}</div>
+              </div>
+            )}
+            {reimbursements.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">💸 Reembolsos</p>
+                <div className="space-y-1">{renderReimbs(reimbursements)}</div>
+              </div>
+            )}
+            {invoices.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">🧾 Notas Fiscais</p>
+                <div className="space-y-1">{renderInvoices(invoices)}</div>
+              </div>
+            )}
           </div>
         )}
-        {!loading && (tab === "all" || tab === "reimbursements") && reimbursements.length > 0 && (
-          <div className="space-y-3 mb-3">
-            {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mt-4">Reembolsos</p>}
-            {reimbursements.map((r) => <ReimbursementCard key={r.id} req={r} onDelete={refresh} />)}
+
+        {/* Tab: Viagens */}
+        {!loading && tab === "travels" && (
+          <div className="space-y-1">
+            {travelGroups.length === 0
+              ? <EmptyTab href="/solicitar" label="solicitação de viagem" />
+              : renderTravels(travels)}
           </div>
         )}
-        {!loading && (tab === "all" || tab === "invoices") && invoices.length > 0 && (
-          <div className="space-y-3 mb-3">
-            {tab === "all" && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mt-4">Notas Fiscais</p>}
-            {invoices.map((i) => <InvoiceCard key={i.id} inv={i} onDelete={refresh} />)}
+
+        {/* Tab: Reembolsos */}
+        {!loading && tab === "reimbursements" && (
+          <div className="space-y-1">
+            {reimbGroups.length === 0
+              ? <EmptyTab href="/reembolso" label="reembolso" />
+              : renderReimbs(reimbursements)}
+          </div>
+        )}
+
+        {/* Tab: NFs */}
+        {!loading && tab === "invoices" && (
+          <div className="space-y-1">
+            {invGroups.length === 0
+              ? <EmptyTab href="/notas-fiscais" label="nota fiscal" />
+              : renderInvoices(invoices)}
           </div>
         )}
 
@@ -455,6 +574,16 @@ function Content() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function EmptyTab({ href, label }: { href: string; label: string }) {
+  return (
+    <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+      <p className="text-3xl mb-2">📭</p>
+      <p className="text-slate-500 text-sm mb-4">Nenhum(a) {label} ainda.</p>
+      <a href={href} className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">+ Nova solicitação</a>
     </div>
   );
 }

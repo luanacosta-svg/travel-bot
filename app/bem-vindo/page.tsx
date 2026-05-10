@@ -55,6 +55,7 @@ const TOUR_STEPS = [
 type Tab = "home" | "beneficios" | "pagamento" | "reembolsos" | "viagens" | "guia";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "home", label: "Início" },
   { id: "beneficios", label: "Benefícios" },
   { id: "pagamento", label: "Pagamento" },
   { id: "reembolsos", label: "Reembolsos" },
@@ -81,10 +82,25 @@ const badgeBg: Record<string, string> = {
 export default function BemVindoPage() {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [activeTourStep, setActiveTourStep] = useState<number | null>(null);
+  const [expandAll, setExpandAll] = useState(false);
 
   function goTo(tab: Tab) {
     setActiveTab(tab);
     window.history.replaceState(null, "", tab === "home" ? "/bem-vindo" : `/bem-vindo#${tab}`);
+  }
+
+  function toggleExpandAll() {
+    if (expandAll) {
+      setActiveTourStep(null);
+      setExpandAll(false);
+    } else {
+      setExpandAll(true);
+      setActiveTourStep(-1); // sentinel: all open
+    }
+  }
+
+  function isStepOpen(id: number) {
+    return expandAll || activeTourStep === id;
   }
 
   return (
@@ -114,7 +130,7 @@ export default function BemVindoPage() {
           </nav>
 
           {/* Mobile tabs */}
-          <div className="flex md:hidden items-center gap-1 overflow-x-auto">
+          <div className="flex md:hidden items-center gap-1 overflow-x-auto max-w-xs">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -219,6 +235,14 @@ export default function BemVindoPage() {
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">
                   Acesso a academias, estúdios de pilates, yoga, crossfit e muito mais em todo o Brasil. Escolha o plano que melhor se encaixa na sua rotina.
                 </p>
+                <a
+                  href="https://gympass.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-4 text-sm text-green-600 font-medium hover:text-green-700 transition"
+                >
+                  Acessar Gympass →
+                </a>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl p-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
@@ -228,11 +252,25 @@ export default function BemVindoPage() {
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">
                   Consultas médicas online com especialistas de diversas áreas, disponível 24 horas por dia, 7 dias por semana, direto pelo aplicativo.
                 </p>
+                <a
+                  href="https://conexasaude.com.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-4 text-sm text-blue-600 font-medium hover:text-blue-700 transition"
+                >
+                  Acessar Conexa Saúde →
+                </a>
               </div>
             </div>
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5">
               <p className="text-sm text-amber-800 font-medium">📬 Dúvidas sobre ativação dos benefícios?</p>
-              <p className="text-sm text-amber-700 mt-1">Fale com o time de Pessoas — eles vão te ajudar a ativar e configurar cada benefício.</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Fale com o time de Pessoas pelo e-mail{" "}
+                <a href="mailto:pessoas@49educacao.com.br" className="font-semibold underline hover:text-amber-900 transition">
+                  pessoas@49educacao.com.br
+                </a>{" "}
+                — eles vão te ajudar a ativar e configurar cada benefício.
+              </p>
             </div>
           </div>
         )}
@@ -407,13 +445,21 @@ export default function BemVindoPage() {
         {/* GUIA */}
         {activeTab === "guia" && (
           <div className="space-y-6 max-w-4xl mx-auto">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">🗺️ Guia rápido do 49Pay</h2>
-              <p className="text-slate-500 text-sm mt-1">Passo a passo para as principais ações na plataforma.</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">🗺️ Guia rápido do 49Pay</h2>
+                <p className="text-slate-500 text-sm mt-1">Passo a passo para as principais ações na plataforma.</p>
+              </div>
+              <button
+                onClick={toggleExpandAll}
+                className="whitespace-nowrap text-sm font-medium text-slate-500 border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2 transition hover:bg-slate-50 flex-shrink-0"
+              >
+                {expandAll ? "Recolher todos ▲" : "Expandir todos ▼"}
+              </button>
             </div>
             <div className="grid md:grid-cols-3 gap-4">
               {TOUR_STEPS.map((step) => {
-                const isOpen = activeTourStep === step.id;
+                const isOpen = isStepOpen(step.id);
                 return (
                   <div
                     key={step.id}
@@ -421,7 +467,10 @@ export default function BemVindoPage() {
                   >
                     <button
                       className="w-full flex items-center gap-3 p-5 text-left hover:bg-slate-50 transition"
-                      onClick={() => setActiveTourStep(isOpen ? null : step.id)}
+                      onClick={() => {
+                        if (expandAll) return; // em expandAll individual click não faz nada
+                        setActiveTourStep(isOpen ? null : step.id);
+                      }}
                     >
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 border ${colorMap[step.color]}`}>
                         {step.icon}
@@ -430,7 +479,7 @@ export default function BemVindoPage() {
                         <p className="font-semibold text-slate-800 text-sm">{step.title}</p>
                         <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{step.description}</p>
                       </div>
-                      <span className="text-slate-400 flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
+                      {!expandAll && <span className="text-slate-400 flex-shrink-0">{isOpen ? "▲" : "▼"}</span>}
                     </button>
                     {isOpen && (
                       <div className="px-5 pb-5 space-y-4 border-t border-slate-100">
@@ -466,9 +515,15 @@ export default function BemVindoPage() {
         )}
 
         {/* Footer */}
-        <footer className="text-center py-8 mt-12 border-t border-slate-200">
+        <footer className="text-center py-8 mt-12 border-t border-slate-200 space-y-2">
           <p className="text-xs text-slate-400">
-            49Pay · 49 Educação · Dúvidas? Fale com o time de Pessoas
+            49Pay · 49 Educação
+          </p>
+          <p className="text-xs text-slate-400">
+            Dúvidas?{" "}
+            <a href="mailto:pessoas@49educacao.com.br" className="text-orange-500 hover:text-orange-600 font-medium transition">
+              pessoas@49educacao.com.br
+            </a>
           </p>
         </footer>
       </main>
