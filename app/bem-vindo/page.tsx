@@ -265,7 +265,7 @@ export default function BemVindoPage() {
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5">
               <p className="text-sm text-amber-800 font-medium">📬 Dúvidas sobre ativação dos benefícios?</p>
               <p className="text-sm text-amber-700 mt-1">
-                Fale com a Luana Costa pelo WhatsApp:{" "}
+                🧡 Fale com a Luana Costa pelo WhatsApp:{" "}
                 <a
                   href="https://wa.me/5548996843058"
                   target="_blank"
@@ -532,7 +532,7 @@ export default function BemVindoPage() {
               rel="noopener noreferrer"
               className="text-orange-500 hover:text-orange-600 font-medium transition"
             >
-              Fale com a Luana no WhatsApp
+              🧡 Fale com a Luana no WhatsApp
             </a>
           </p>
         </footer>
