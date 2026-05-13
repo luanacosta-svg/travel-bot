@@ -395,6 +395,8 @@ function Content() {
   const [invoices, setInvoices] = useState<InvoiceUpload[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabKey>("all");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
 
   function refresh() {
     Promise.all([
@@ -431,9 +433,35 @@ function Content() {
 
   const hasData = travels.length > 0 || reimbursements.length > 0 || invoices.length > 0;
 
-  const travelGroups = groupByMonth(travels);
-  const reimbGroups = groupByMonth(reimbursements);
-  const invGroups = groupByMonth(invoices);
+  const q = search.toLowerCase();
+
+  function applySort<T extends { createdAt: string }>(items: T[], getAmount?: (i: T) => number): T[] {
+    return [...items].sort((a, b) => {
+      if (sort === "date_desc") return b.createdAt.localeCompare(a.createdAt);
+      if (sort === "date_asc")  return a.createdAt.localeCompare(b.createdAt);
+      if (getAmount) {
+        if (sort === "amount_desc") return getAmount(b) - getAmount(a);
+        if (sort === "amount_asc")  return getAmount(a) - getAmount(b);
+      }
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+  }
+
+  const filteredTravels = applySort(
+    q ? travels.filter((r) => [r.travel.destination, r.travel.origin ?? "", r.travel.eventName ?? ""].some((s) => s.toLowerCase().includes(q))) : travels
+  );
+  const filteredReimbs = applySort(
+    q ? reimbursements.filter((r) => r.expense.description.toLowerCase().includes(q) || r.expense.category.toLowerCase().includes(q)) : reimbursements,
+    (r) => r.expense.amount
+  );
+  const filteredInvoices = applySort(
+    q ? invoices.filter((i) => (i.invoice.description ?? "").toLowerCase().includes(q) || (i.invoice.invoiceNumber ?? "").toLowerCase().includes(q)) : invoices,
+    (i) => i.invoice.amount
+  );
+
+  const travelGroups = groupByMonth(filteredTravels);
+  const reimbGroups = groupByMonth(filteredReimbs);
+  const invGroups = groupByMonth(filteredInvoices);
 
   function renderTravels(items: TravelRequest[]) {
     return groupByMonth(items).map((group) => (
@@ -513,27 +541,58 @@ function Content() {
           ))}
         </div>
 
+        {/* Busca + Ordenação */}
+        {hasData && !loading && (
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">🔍</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por destino, descrição, NF..."
+                className="w-full border border-slate-200 rounded-xl pl-9 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition text-xs">✕</button>
+              )}
+            </div>
+            <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+              <option value="date_desc">↓ Mais recentes</option>
+              <option value="date_asc">↑ Mais antigos</option>
+              <option value="amount_desc">↓ Maior valor</option>
+              <option value="amount_asc">↑ Menor valor</option>
+            </select>
+          </div>
+        )}
+
         {loading && <div className="text-center py-12 text-slate-400">Carregando...</div>}
 
         {/* Tab: Tudo */}
         {!loading && tab === "all" && (
           <div className="space-y-6">
-            {travels.length > 0 && (
+            {filteredTravels.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">✈ Viagens</p>
-                <div className="space-y-1">{renderTravels(travels)}</div>
+                <div className="space-y-1">{renderTravels(filteredTravels)}</div>
               </div>
             )}
-            {reimbursements.length > 0 && (
+            {filteredReimbs.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">💸 Reembolsos</p>
-                <div className="space-y-1">{renderReimbs(reimbursements)}</div>
+                <div className="space-y-1">{renderReimbs(filteredReimbs)}</div>
               </div>
             )}
-            {invoices.length > 0 && (
+            {filteredInvoices.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1 mb-2">🧾 Notas Fiscais</p>
-                <div className="space-y-1">{renderInvoices(invoices)}</div>
+                <div className="space-y-1">{renderInvoices(filteredInvoices)}</div>
+              </div>
+            )}
+            {q && filteredTravels.length === 0 && filteredReimbs.length === 0 && filteredInvoices.length === 0 && (
+              <div className="text-center py-12 text-slate-400">
+                <p className="text-3xl mb-2">🔍</p>
+                <p className="text-sm">Nenhum resultado para "<strong>{search}</strong>"</p>
               </div>
             )}
           </div>
@@ -543,8 +602,8 @@ function Content() {
         {!loading && tab === "travels" && (
           <div className="space-y-1">
             {travelGroups.length === 0
-              ? <EmptyTab href="/solicitar" label="solicitação de viagem" />
-              : renderTravels(travels)}
+              ? <EmptyTab href="/solicitar" label="solicitação de viagem" empty={!q} />
+              : renderTravels(filteredTravels)}
           </div>
         )}
 
@@ -552,8 +611,8 @@ function Content() {
         {!loading && tab === "reimbursements" && (
           <div className="space-y-1">
             {reimbGroups.length === 0
-              ? <EmptyTab href="/reembolso" label="reembolso" />
-              : renderReimbs(reimbursements)}
+              ? <EmptyTab href="/reembolso" label="reembolso" empty={!q} />
+              : renderReimbs(filteredReimbs)}
           </div>
         )}
 
@@ -561,8 +620,8 @@ function Content() {
         {!loading && tab === "invoices" && (
           <div className="space-y-1">
             {invGroups.length === 0
-              ? <EmptyTab href="/notas-fiscais" label="nota fiscal" />
-              : renderInvoices(invoices)}
+              ? <EmptyTab href="/notas-fiscais" label="nota fiscal" empty={!q} />
+              : renderInvoices(filteredInvoices)}
           </div>
         )}
 
@@ -578,7 +637,13 @@ function Content() {
   );
 }
 
-function EmptyTab({ href, label }: { href: string; label: string }) {
+function EmptyTab({ href, label, empty = true }: { href: string; label: string; empty?: boolean }) {
+  if (!empty) return (
+    <div className="text-center py-12 text-slate-400">
+      <p className="text-3xl mb-2">🔍</p>
+      <p className="text-sm">Nenhum resultado encontrado.</p>
+    </div>
+  );
   return (
     <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
       <p className="text-3xl mb-2">📭</p>

@@ -33,6 +33,7 @@ const INV_STATUS: Record<string, { label: string; color: string }> = {
 
 type Tab = "travels" | "reimbursements" | "invoices";
 type PayFilter = "all" | "topay" | "paid";
+type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
 
 const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -95,6 +96,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [sort, setSort] = useState<SortKey>("date_desc");
 
   const fetchAll = useCallback(async () => {
     const [t, r, i] = await Promise.all([
@@ -125,24 +127,36 @@ export default function AdminPage() {
     return true;
   }
 
+  function applySort<T extends { createdAt: string }>(items: T[], getAmount?: (item: T) => number): T[] {
+    return [...items].sort((a, b) => {
+      if (sort === "date_desc") return b.createdAt.localeCompare(a.createdAt);
+      if (sort === "date_asc")  return a.createdAt.localeCompare(b.createdAt);
+      if (getAmount) {
+        if (sort === "amount_desc") return getAmount(b) - getAmount(a);
+        if (sort === "amount_asc")  return getAmount(a) - getAmount(b);
+      }
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+  }
+
   const filteredTravels = useMemo(
-    () => travels.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt)),
-    [travels, search, dateFrom, dateTo]
+    () => applySort(travels.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt))),
+    [travels, search, dateFrom, dateTo, sort]
   );
 
   const filteredReimb = useMemo(() => {
     let items = reimbursements.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt));
     if (payFilter === "topay") items = items.filter((r) => r.status === "approved");
     if (payFilter === "paid")  items = items.filter((r) => r.status === "paid");
-    return items;
-  }, [reimbursements, search, dateFrom, dateTo, payFilter]);
+    return applySort(items, (r) => r.expense.amount);
+  }, [reimbursements, search, dateFrom, dateTo, payFilter, sort]);
 
   const filteredInv = useMemo(() => {
     let items = invoices.filter((i) => matchesFilter(i.requester.name, i.requester.email, i.createdAt));
     if (payFilter === "topay") items = items.filter((i) => i.status === "received");
     if (payFilter === "paid")  items = items.filter((i) => i.status === "paid");
-    return items;
-  }, [invoices, search, dateFrom, dateTo, payFilter]);
+    return applySort(items, (i) => i.invoice.amount);
+  }, [invoices, search, dateFrom, dateTo, payFilter, sort]);
 
   const reimbTotal = filteredReimb.reduce((s, r) => s + r.expense.amount, 0);
   const invTotal   = filteredInv.reduce((s, i) => s + i.invoice.amount, 0);
@@ -296,6 +310,22 @@ export default function AdminPage() {
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
               className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
           </div>
+          {/* Atalhos de ano */}
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-medium text-slate-500">Ano</label>
+            <div className="flex gap-1">
+              {[new Date().getFullYear(), new Date().getFullYear() - 1].map((y) => {
+                const isActive = dateFrom === `${y}-01-01` && dateTo === `${y}-12-31`;
+                return (
+                  <button key={y} type="button"
+                    onClick={() => isActive ? (setDateFrom(""), setDateTo("")) : (setDateFrom(`${y}-01-01`), setDateTo(`${y}-12-31`))}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${isActive ? "bg-orange-500 text-white border-orange-500" : "bg-white text-slate-600 border-slate-200 hover:border-orange-300"}`}>
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           {(search || dateFrom || dateTo) && (
             <button onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); }}
               className="text-sm text-slate-400 hover:text-slate-600 transition">✕ Limpar</button>
@@ -327,7 +357,14 @@ export default function AdminPage() {
               <span>{filteredTravels.length} solicitação(ões)</span>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}
+              className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+              <option value="date_desc">↓ Mais recentes</option>
+              <option value="date_asc">↑ Mais antigos</option>
+              <option value="amount_desc">↓ Maior valor</option>
+              <option value="amount_asc">↑ Menor valor</option>
+            </select>
             <button onClick={handleExport} className="text-sm text-green-600 hover:text-green-700 font-medium border border-green-200 rounded-lg px-3 py-1.5 transition">
               ↓ Exportar CSV
             </button>
@@ -534,17 +571,17 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
 
               <div className="flex gap-2 flex-wrap">
                 <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                  ✓ Aprovar
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                  {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Aprovar"}
                 </button>
                 <button onClick={() => updateStatus("rejected")} disabled={saving || req.status === "rejected"}
-                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                  ✗ Recusar
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                  {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
                 </button>
                 {req.status === "approved" && (
                   <button onClick={() => updateStatus("paid")} disabled={saving}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                    💸 Marcar como pago
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
+                    {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💸 Marcar como pago"}
                   </button>
                 )}
               </div>
@@ -660,19 +697,19 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
                 {inv.status === "pending" && (
                   <>
                     <button onClick={() => updateStatus("received")} disabled={saving}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                      ✓ Confirmar recebimento
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-44 flex items-center justify-center gap-1.5">
+                      {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Confirmar recebimento"}
                     </button>
                     <button onClick={() => updateStatus("rejected")} disabled={saving}
-                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                      ✗ Recusar
+                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                      {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
                     </button>
                   </>
                 )}
                 {inv.status === "received" && (
                   <button onClick={() => updateStatus("paid")} disabled={saving}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-                    💰 Marcar como pago
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
+                    {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💰 Marcar como pago"}
                   </button>
                 )}
               </div>

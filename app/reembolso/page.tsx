@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import type { UserSession } from "@/types";
 
 const CATEGORIES = ["Alimentação", "Transporte", "Hospedagem", "Material", "Outros"];
+const DRAFT_KEY = "49pay_reembolso_draft";
 
 interface ExpenseItem {
   id: number;
@@ -17,8 +18,27 @@ interface ExpenseItem {
   fileName: string;
 }
 
+type DraftItem = Omit<ExpenseItem, "file">;
+
 function newItem(id: number): ExpenseItem {
   return { id, description: "", category: "alimentação", date: "", amount: "", file: null, fileName: "" };
+}
+
+function saveDraft(items: ExpenseItem[]) {
+  const draft: DraftItem[] = items.map(({ file, ...rest }) => rest);
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+function loadDraft(): ExpenseItem[] | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft: DraftItem[] = JSON.parse(raw);
+    if (!Array.isArray(draft) || draft.length === 0) return null;
+    return draft.map((d) => ({ ...d, file: null }));
+  } catch {
+    return null;
+  }
 }
 
 export default function ReembolsoPage() {
@@ -27,10 +47,21 @@ export default function ReembolsoPage() {
   const [items, setItems] = useState<ExpenseItem[]>([newItem(1)]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [draftSaved, setDraftSaved] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
+    const draft = loadDraft();
+    if (draft) setItems(draft);
   }, []);
+
+  // Auto-salva rascunho sempre que os itens mudam
+  useEffect(() => {
+    saveDraft(items);
+    setDraftSaved(true);
+    const t = setTimeout(() => setDraftSaved(false), 2000);
+    return () => clearTimeout(t);
+  }, [items]);
 
   function updateItem(id: number, updates: Partial<ExpenseItem>) {
     setItems((prev) => prev.map((item) => item.id === id ? { ...item, ...updates } : item));
@@ -43,6 +74,10 @@ export default function ReembolsoPage() {
   function removeItem(id: number) {
     if (items.length === 1) return;
     setItems((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function clearDraft() {
+    localStorage.removeItem(DRAFT_KEY);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,6 +98,7 @@ export default function ReembolsoPage() {
 
       const res = await fetch("/api/reembolso/submit", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Erro ao enviar");
+      clearDraft();
       router.push("/minhas-solicitacoes?novo=1");
     } catch {
       setError("Erro ao enviar. Tente novamente.");
@@ -75,9 +111,27 @@ export default function ReembolsoPage() {
       <Header user={user ?? undefined} title="Reembolso" />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Solicitar reembolso</h1>
-          <p className="text-slate-500 text-sm mt-1">Adicione uma ou mais despesas de uma vez.</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Solicitar reembolso</h1>
+            <p className="text-slate-500 text-sm mt-1">Adicione uma ou mais despesas de uma vez.</p>
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            {draftSaved && (
+              <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-full px-3 py-1 transition-all">
+                ✓ Rascunho salvo
+              </span>
+            )}
+            {items.some(i => i.description || i.amount || i.date) && (
+              <button
+                type="button"
+                onClick={() => { clearDraft(); setItems([newItem(Date.now())]); }}
+                className="text-xs text-slate-400 hover:text-red-500 transition"
+              >
+                ✕ Limpar rascunho
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

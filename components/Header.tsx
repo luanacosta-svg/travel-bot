@@ -16,6 +16,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   async function handleLogout() {
+    if (!confirm("Tem certeza que deseja sair?")) return;
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
