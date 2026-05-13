@@ -24,10 +24,9 @@ export async function POST(req: NextRequest) {
 
     const invoiceNumber = String(formData.get("invoiceNumber") ?? "").trim();
     const invoiceDate = String(formData.get("invoiceDate") ?? "").trim();
-    const companyName = String(formData.get("companyName") ?? "");
 
     // Gera descrição automática a partir do número da NF
-    const description = invoiceNumber ? `NF ${invoiceNumber}` : companyName;
+    const description = invoiceNumber ? `NF ${invoiceNumber}` : "Nota Fiscal";
 
     const item: InvoiceUpload = {
       id,
@@ -36,8 +35,7 @@ export async function POST(req: NextRequest) {
       requester: { name: session.name, email: session.email },
       invoice: {
         description,
-        companyName,
-        cnpj: String(formData.get("cnpj") ?? "") || undefined,
+        companyName: undefined,
         amount: parseFloat(String(formData.get("amount") ?? "0")),
         invoiceFile,
         invoiceNumber: invoiceNumber || undefined,

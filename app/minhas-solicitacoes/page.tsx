@@ -75,7 +75,7 @@ function exportCSV(
   invoices.forEach((i) => rows.push([
     "Nota Fiscal",
     formatDate(i.createdAt),
-    `${i.invoice.description} — ${i.invoice.companyName}`,
+    i.invoice.invoiceNumber ? `NF ${i.invoice.invoiceNumber}` : i.invoice.description,
     String(i.invoice.amount),
     STATUS_LABEL[i.status] ?? i.status,
   ]));
@@ -117,7 +117,7 @@ function printReport(
   const invRows = invoices.map((i) => `
     <tr>
       <td>${i.invoice.description}</td>
-      <td>${i.invoice.companyName}</td>
+      <td>${i.invoice.invoiceNumber ? `NF ${i.invoice.invoiceNumber}` : "—"}</td>
       <td>${formatDate(i.createdAt)}</td>
       <td style="text-align:right">${fmt(i.invoice.amount)}</td>
       <td>${STATUS_LABEL[i.status] ?? i.status}</td>
@@ -340,15 +340,15 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
               )}
             </div>
             <p className="font-semibold text-slate-800 truncate">{inv.invoice.description}</p>
-            <p className="text-sm text-slate-400 mt-0.5">{inv.invoice.companyName} · {formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
+            <p className="text-sm text-slate-400 mt-0.5">{formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
           </div>
           <span className="text-slate-300 mt-1">{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && (
         <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-2 text-sm">
-          <p><span className="text-slate-400">Empresa:</span> {inv.invoice.companyName}</p>
-          {inv.invoice.cnpj && <p><span className="text-slate-400">CNPJ:</span> {inv.invoice.cnpj}</p>}
+          {inv.invoice.invoiceNumber && <p><span className="text-slate-400">Número da NF:</span> <span className="font-semibold">{inv.invoice.invoiceNumber}</span></p>}
+          {inv.invoice.invoiceDate && <p><span className="text-slate-400">Data de emissão:</span> {new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>}
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(inv.invoice.amount)}</span></p>
           {inv.paymentDueDate && inv.status !== "paid" && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-2">

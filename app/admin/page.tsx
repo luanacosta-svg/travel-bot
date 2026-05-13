@@ -165,8 +165,8 @@ export default function AdminPage() {
       );
     } else if (tab === "invoices") {
       exportCSV(
-        [["Nome", "Email", "Descrição", "Empresa", "CNPJ", "Valor", "Status", "Enviado em"],
-         ...filteredInv.map((i) => [i.requester.name, i.requester.email, i.invoice.description, i.invoice.companyName, i.invoice.cnpj ?? "", i.invoice.amount.toFixed(2), i.status, formatDateShort(i.createdAt)])],
+        [["Nome", "Email", "Número NF", "Data Emissão", "Valor", "Status", "Enviado em"],
+         ...filteredInv.map((i) => [i.requester.name, i.requester.email, i.invoice.invoiceNumber ?? "", i.invoice.invoiceDate ?? "", i.invoice.amount.toFixed(2), i.status, formatDateShort(i.createdAt)])],
         `notas-fiscais-${new Date().toISOString().slice(0,10)}.csv`
       );
     } else {
@@ -619,7 +619,7 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
               <span className="text-xs text-slate-400">🧾 Nota Fiscal</span>
             </div>
             <p className="font-semibold text-slate-800">{inv.requester.name} <span className="font-normal text-slate-400 text-sm">· {inv.invoice.description}</span></p>
-            <p className="text-sm text-slate-400">{inv.invoice.companyName} · {formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
+            <p className="text-sm text-slate-400">{formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
             {inv.paymentDueDate && (
               <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
             )}
@@ -631,8 +631,6 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
       {open && (
         <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-slate-400">Empresa:</span> <span className="text-slate-700">{inv.invoice.companyName}</span></div>
-            {inv.invoice.cnpj && <div><span className="text-slate-400">CNPJ:</span> <span className="text-slate-700">{inv.invoice.cnpj}</span></div>}
             {inv.invoice.invoiceNumber && <div><span className="text-slate-400">Número da NF:</span> <span className="text-slate-700 font-semibold">{inv.invoice.invoiceNumber}</span></div>}
             {inv.invoice.invoiceDate && <div><span className="text-slate-400">Data de emissão:</span> <span className="text-slate-700">{new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</span></div>}
             <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(inv.invoice.amount)}</span></div>

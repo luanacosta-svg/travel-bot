@@ -299,8 +299,8 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
     <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:20px;">
       <p style="margin:0 0 8px;"><strong>Enviado por:</strong> ${req.requester.name} &lt;${req.requester.email}&gt;</p>
       <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
-      <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
-      ${req.invoice.cnpj ? `<p style="margin:0 0 8px;"><strong>CNPJ:</strong> ${req.invoice.cnpj}</p>` : ""}
+      ${req.invoice.invoiceNumber ? `<p style="margin:0 0 8px;"><strong>Número da NF:</strong> ${req.invoice.invoiceNumber}</p>` : ""}
+      ${req.invoice.invoiceDate ? `<p style="margin:0 0 8px;"><strong>Data de emissão:</strong> ${new Date(req.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>` : ""}
       <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
     </div>
     <p style="color:#374151;">📎 Nota fiscal em anexo neste e-mail.</p>
@@ -314,7 +314,7 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
   const attachments = [];
   if (fileExists(req.invoice.invoiceFile)) {
     attachments.push({
-      filename: `nota-fiscal-${req.invoice.companyName.replace(/\s+/g, "-")}.${req.invoice.invoiceFile.split(".").pop()}`,
+      filename: `nota-fiscal-${req.invoice.invoiceNumber ?? req.requester.name.split(" ")[0]}.${req.invoice.invoiceFile.split(".").pop()}`,
       content: fs.readFileSync(getFilePath(req.invoice.invoiceFile)),
     });
   }
@@ -323,7 +323,7 @@ export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void>
     from: `"49Pay" <${process.env.GMAIL_USER}>`,
     to: process.env.MANAGER_EMAIL,
     cc: req.requester.email,
-    subject: `[Nota Fiscal] ${req.requester.name} · ${req.invoice.companyName}`,
+    subject: `[Nota Fiscal] ${req.requester.name}${req.invoice.invoiceNumber ? ` · NF ${req.invoice.invoiceNumber}` : ""}`,
     html: baseTemplate(`Nota fiscal enviada — ${req.requester.name}`, body),
     attachments,
   });
@@ -339,7 +339,7 @@ export async function sendInvoicePaidNotification(req: InvoiceUpload): Promise<v
     <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
       <p style="margin:0 0 8px;font-weight:600;color:#15803d;">💰 Pagamento efetuado</p>
       <p style="margin:0 0 6px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
-      <p style="margin:0 0 6px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
+      ${req.invoice.invoiceNumber ? `<p style="margin:0 0 6px;"><strong>Número da NF:</strong> ${req.invoice.invoiceNumber}</p>` : ""}
       <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
     </div>
     <p style="color:#374151;">Qualquer dúvida, entre em contato com a equipe.</p>`;
@@ -363,7 +363,7 @@ export async function sendInvoiceStatusUpdate(req: InvoiceUpload): Promise<void>
     <p style="color:#374151;">Sua nota fiscal foi <strong>${received ? "recebida e confirmada ✓" : "recusada"}</strong>.</p>
     <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:16px 0;">
       <p style="margin:0 0 8px;"><strong>Descrição:</strong> ${req.invoice.description}</p>
-      <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${req.invoice.companyName}</p>
+      ${req.invoice.invoiceNumber ? `<p style="margin:0 0 8px;"><strong>Número da NF:</strong> ${req.invoice.invoiceNumber}</p>` : ""}
       <p style="margin:0;"><strong>Valor:</strong> ${amount}</p>
       ${req.adminNote ? `<p style="margin:8px 0 0;"><strong>Observação:</strong> ${req.adminNote}</p>` : ""}
     </div>
@@ -411,7 +411,7 @@ export async function sendMonthlyReport(
     <tr>
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.requester.name}</td>
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.invoice.description}</td>
-      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.invoice.companyName}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.invoice.invoiceNumber ? `NF ${i.invoice.invoiceNumber}` : "—"}</td>
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(i.invoice.amount)}</td>
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${i.status === "received" ? "✓ Recebido" : "Pendente"}</td>
     </tr>`).join("") || `<tr><td colspan="5" style="padding:10px;color:#94a3b8;text-align:center;">Nenhuma nota fiscal no período</td></tr>`;

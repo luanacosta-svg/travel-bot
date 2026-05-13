@@ -51,7 +51,7 @@ export interface InvoiceUpload {
   requester: { name: string; email: string };
   invoice: {
     description: string;
-    companyName: string;
+    companyName?: string;
     cnpj?: string;
     amount: number;
     invoiceFile: string;
