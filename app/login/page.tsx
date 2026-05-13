@@ -12,6 +12,11 @@ function LoginForm() {
   const [mode, setMode] = useState<"user" | "admin">(isAdmin ? "admin" : "user");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    setName(localStorage.getItem("49pay_name") ?? "");
+    setEmail(localStorage.getItem("49pay_email") ?? "");
+  }, []);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +43,10 @@ function LoginForm() {
     setLoading(false);
 
     if (!res.ok) { setError(data.error); return; }
+    if (mode === "user") {
+      localStorage.setItem("49pay_name", name);
+      localStorage.setItem("49pay_email", email);
+    }
     router.push(mode === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
