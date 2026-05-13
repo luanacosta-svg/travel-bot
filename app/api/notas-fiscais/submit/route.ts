@@ -22,17 +22,26 @@ export async function POST(req: NextRequest) {
     }
     const invoiceFile = await saveUploadedFile(file, `nf-${id}`);
 
+    const invoiceNumber = String(formData.get("invoiceNumber") ?? "").trim();
+    const invoiceDate = String(formData.get("invoiceDate") ?? "").trim();
+    const companyName = String(formData.get("companyName") ?? "");
+
+    // Gera descrição automática a partir do número da NF
+    const description = invoiceNumber ? `NF ${invoiceNumber}` : companyName;
+
     const item: InvoiceUpload = {
       id,
       createdAt: new Date().toISOString(),
       status: "pending",
       requester: { name: session.name, email: session.email },
       invoice: {
-        description: String(formData.get("description") ?? ""),
-        companyName: String(formData.get("companyName") ?? ""),
+        description,
+        companyName,
         cnpj: String(formData.get("cnpj") ?? "") || undefined,
         amount: parseFloat(String(formData.get("amount") ?? "0")),
         invoiceFile,
+        invoiceNumber: invoiceNumber || undefined,
+        invoiceDate: invoiceDate || undefined,
       },
     };
 

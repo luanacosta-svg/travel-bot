@@ -633,14 +633,16 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><span className="text-slate-400">Empresa:</span> <span className="text-slate-700">{inv.invoice.companyName}</span></div>
             {inv.invoice.cnpj && <div><span className="text-slate-400">CNPJ:</span> <span className="text-slate-700">{inv.invoice.cnpj}</span></div>}
+            {inv.invoice.invoiceNumber && <div><span className="text-slate-400">Número da NF:</span> <span className="text-slate-700 font-semibold">{inv.invoice.invoiceNumber}</span></div>}
+            {inv.invoice.invoiceDate && <div><span className="text-slate-400">Data de emissão:</span> <span className="text-slate-700">{new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</span></div>}
             <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(inv.invoice.amount)}</span></div>
             <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(inv.createdAt)}</span></div>
           </div>
 
-          <div>
-            <a href={`/api/files/${inv.invoice.invoiceFile}`} target="_blank" rel="noopener noreferrer"
+          <div className="flex items-center gap-4 flex-wrap">
+            <a href={`/api/notas-fiscais/${inv.id}/file`} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
-              📄 Ver nota fiscal
+              📄 Ver / baixar nota fiscal
             </a>
           </div>
 

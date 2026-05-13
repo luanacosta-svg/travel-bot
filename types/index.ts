@@ -55,6 +55,8 @@ export interface InvoiceUpload {
     cnpj?: string;
     amount: number;
     invoiceFile: string;
+    invoiceNumber?: string;
+    invoiceDate?: string;
   };
   adminNote?: string;
   paymentDueDate?: string;
