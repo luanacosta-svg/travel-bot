@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   // Monta o nome amigável: "Luana Costa - 25-04-2026 - NF 38.pdf"
   const namePart = sanitize(inv.requester.name);
   const datePart = inv.invoice.invoiceDate ? formatDateBR(inv.invoice.invoiceDate) : inv.createdAt.slice(0, 10).split("-").reverse().join("-");
-  const nfPart = inv.invoice.invoiceNumber ? `NF ${inv.invoice.invoiceNumber}` : inv.invoice.companyName;
+  const nfPart = inv.invoice.invoiceNumber ? `NF ${inv.invoice.invoiceNumber}` : "Nota Fiscal";
   const friendlyName = `${namePart} - ${datePart} - ${sanitize(nfPart)}.${ext}`;
 
   const buffer = fs.readFileSync(getFilePath(storedFile));
