@@ -10,6 +10,22 @@ interface HeaderProps {
   title?: string;
 }
 
+function avatarColor(name: string): { bg: string; text: string } {
+  const palette = [
+    { bg: "#ede9fe", text: "#7c3aed" },
+    { bg: "#dbeafe", text: "#1d4ed8" },
+    { bg: "#dcfce7", text: "#15803d" },
+    { bg: "#fce7f3", text: "#be185d" },
+    { bg: "#fef3c7", text: "#b45309" },
+    { bg: "#cffafe", text: "#0e7490" },
+    { bg: "#fee2e2", text: "#b91c1c" },
+    { bg: "#f0fdf4", text: "#166534" },
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return palette[Math.abs(hash) % palette.length];
+}
+
 export default function Header({ user, isAdmin, title }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,11 +79,23 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-              <span className="text-orange-600 text-xs font-bold">
-                {isAdmin ? "A" : user?.name?.[0]?.toUpperCase() ?? "?"}
-              </span>
-            </div>
+            {isAdmin ? (
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                <span className="text-orange-600 text-xs font-bold">A</span>
+              </div>
+            ) : (
+              (() => {
+                const name = user?.name ?? "?";
+                const { bg, text } = avatarColor(name);
+                return (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: bg }}>
+                    <span className="text-xs font-bold" style={{ color: text }}>
+                      {name[0]?.toUpperCase() ?? "?"}
+                    </span>
+                  </div>
+                );
+              })()
+            )}
             <span className="text-sm text-slate-600 hidden sm:block">
               {isAdmin ? "Admin" : user?.name}
             </span>

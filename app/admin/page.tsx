@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge, { getStatusBorder } from "@/components/StatusBadge";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload } from "@/types";
 
 function formatDate(iso: string) {
@@ -372,7 +372,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {loading && <div className="text-center py-12 text-slate-400">Carregando...</div>}
+        {loading && <SkeletonList />}
 
         {/* Viagens */}
         {tab === "travels" && !loading && (
@@ -381,8 +381,9 @@ export default function AdminPage() {
             {groupByMonth(filteredTravels).map((group, gi) => (
               <MonthSection key={group.key} label={group.label} count={group.items.length} defaultOpen={gi === 0}>
                 {group.items.map((req) => (
-                  <div key={req.id} className="relative bg-white hover:bg-slate-50 transition-all group">
-                    <a href={`/admin/solicitacao/${req.id}`} className="block px-5 py-4">
+                  <div key={req.id} className="relative bg-white hover:bg-slate-50 transition-all group flex overflow-hidden">
+                    <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(req.status)}`} />
+                    <a href={`/admin/solicitacao/${req.id}`} className="block px-5 py-4 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -463,6 +464,30 @@ export default function AdminPage() {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+      <div className="w-1.5 flex-shrink-0 bg-slate-200 animate-pulse" />
+      <div className="p-5 flex-1 space-y-2.5">
+        <div className="flex gap-2">
+          <div className="h-5 w-20 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-5 w-16 rounded-full bg-slate-200 animate-pulse" />
+        </div>
+        <div className="h-4 w-3/4 rounded bg-slate-200 animate-pulse" />
+        <div className="h-3 w-1/2 rounded bg-slate-200 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <div className="space-y-3">
+      {[0,1,2,3,4].map((i) => <SkeletonCard key={i} />)}
+    </div>
+  );
+}
+
 function Empty() {
   return (
     <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
@@ -514,7 +539,9 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
   }
 
   return (
-    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden`}>
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex`}>
+      <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(req.status)}`} />
+      <div className="flex-1 min-w-0">
       {!nested && <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />}
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
@@ -623,6 +650,7 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -646,7 +674,9 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
   }
 
   return (
-    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden`}>
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex`}>
+      <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(inv.status)}`} />
+      <div className="flex-1 min-w-0">
       <DeleteButton onDelete={async () => { await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" }); onUpdate(); }} />
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
@@ -751,6 +781,7 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

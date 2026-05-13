@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Header from "@/components/Header";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge, { getStatusBorder } from "@/components/StatusBadge";
 import type { TravelRequest, ReimbursementRequest, InvoiceUpload, UserSession } from "@/types";
 
 function formatDate(iso: string) {
@@ -171,6 +171,22 @@ function MonthLabel({ label, count }: { label: string; count: number }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+      <div className="w-1.5 flex-shrink-0 bg-slate-200 animate-pulse" style={{minHeight: 76}} />
+      <div className="p-5 flex-1 space-y-2.5">
+        <div className="flex gap-2">
+          <div className="h-5 w-24 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-5 w-16 rounded-full bg-slate-200 animate-pulse" />
+        </div>
+        <div className="h-4 w-3/4 rounded bg-slate-200 animate-pulse" />
+        <div className="h-3 w-1/2 rounded bg-slate-200 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -181,7 +197,9 @@ function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => voi
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+      <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(req.status)}`} />
+      <div className="flex-1 min-w-0">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -237,6 +255,7 @@ function TravelCard({ req, onDelete }: { req: TravelRequest; onDelete: () => voi
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -252,7 +271,9 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
     onDelete();
   }
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+      <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(req.status)}`} />
+      <div className="flex-1 min-w-0">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -310,6 +331,7 @@ function ReimbursementCard({ req, onDelete }: { req: ReimbursementRequest; onDel
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -326,7 +348,9 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+      <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(inv.status)}`} />
+      <div className="flex-1 min-w-0">
       <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -379,6 +403,7 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -566,7 +591,11 @@ function Content() {
           </div>
         )}
 
-        {loading && <div className="text-center py-12 text-slate-400">Carregando...</div>}
+        {loading && (
+          <div className="space-y-3">
+            {[0,1,2,3].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        )}
 
         {/* Tab: Tudo */}
         {!loading && tab === "all" && (
