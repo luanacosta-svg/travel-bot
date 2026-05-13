@@ -159,14 +159,12 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
   const pdfBytes = await pdfDoc.save();
 
-  // Nome amigável: "Lukas Tassi - 04-04-2026 - Relatorio de despesas.pdf"
+  // Nome amigável: "Luana Costa - Maio 2026 - Reembolsos.pdf"
+  const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   const refDate = new Date(items[0].createdAt);
-  const dd = String(refDate.getDate()).padStart(2, "0");
-  const mm = String(refDate.getMonth() + 1).padStart(2, "0");
-  const yyyy = refDate.getFullYear();
-  const datePart = `${dd}-${mm}-${yyyy}`;
+  const monthLabel = `${MONTH_NAMES[refDate.getMonth()]} ${refDate.getFullYear()}`;
   const safeName = requester.name.replace(/[/\\?%*:|"<>]/g, "").trim();
-  const friendlyName = `${safeName} - ${datePart} - Relatorio de despesas.pdf`;
+  const friendlyName = `${safeName} - ${monthLabel} - Reembolsos.pdf`;
 
   return new NextResponse(Buffer.from(pdfBytes), {
     headers: {
