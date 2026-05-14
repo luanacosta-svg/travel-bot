@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import NotificationBell from "@/components/NotificationBell";
 import type { UserSession } from "@/types";
 
 interface HeaderProps {
@@ -38,37 +39,56 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
     router.refresh();
   }
 
-  const navLinks = [
-    { href: "/dashboard", label: "Início" },
-    { href: "/solicitar", label: "Viagem" },
-    { href: "/reembolso", label: "Reembolso" },
-    { href: "/notas-fiscais", label: "Nota Fiscal" },
+  const userNavLinks = [
+    { href: "/dashboard",          label: "Início" },
+    { href: "/solicitar",          label: "Viagem" },
+    { href: "/reembolso",          label: "Reembolso" },
+    { href: "/notas-fiscais",      label: "Nota Fiscal" },
     { href: "/minhas-solicitacoes", label: "Minhas solicitações" },
-    { href: "/perfil", label: "Perfil" },
+    { href: "/perfil",             label: "Perfil" },
   ];
 
+  const adminNavLinks = [
+    { href: "/admin",                    label: "Solicitações" },
+    { href: "/admin/colaboradores",      label: "Colaboradores" },
+    { href: "/admin/contratos",          label: "Contratos" },
+  ];
+
+  const navLinks = isAdmin ? adminNavLinks : userNavLinks;
+
+  function isActive(href: string) {
+    if (isAdmin) {
+      if (href === "/admin") return pathname === "/admin";
+      return pathname.startsWith(href);
+    }
+    return pathname === href;
+  }
+
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <a href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
-            <img src="/logo-49.png" alt="49Pay" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="font-bold text-slate-800">49Pay</span>
+    <header className="bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        {/* Brand */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <a href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-extrabold text-sm leading-none">49</span>
+            </div>
+            <span className="font-extrabold text-slate-900 text-base tracking-tight">49Pay</span>
           </a>
-          {title && <span className="text-slate-400 text-sm">/ {title}</span>}
+          {title && <span className="text-slate-300 text-sm font-normal">/ {title}</span>}
         </div>
 
         {/* Desktop nav */}
-        {!isAdmin && user && (
-          <nav className="hidden md:flex items-center gap-1">
+        {user && (
+          <nav className="hidden md:flex items-center gap-0.5">
             {navLinks.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className={`text-sm px-3 py-1.5 rounded-lg font-medium transition ${
-                  pathname === l.href
+                className={`text-sm px-3 py-1.5 rounded-full font-semibold transition ${
+                  isActive(l.href)
                     ? "bg-orange-50 text-orange-600"
-                    : "text-slate-500 hover:bg-slate-100"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                 }`}
               >
                 {l.label}
@@ -77,40 +97,51 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
           </nav>
         )}
 
-        <div className="flex items-center gap-3">
+        {/* Right side */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Notification bell (users only) */}
+          {user && !isAdmin && <NotificationBell />}
+
+          {/* Avatar + name */}
           <div className="flex items-center gap-2">
             {isAdmin ? (
-              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                <span className="text-orange-600 text-xs font-bold">A</span>
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-orange-700 text-xs font-extrabold">A</span>
               </div>
             ) : (
               (() => {
                 const name = user?.name ?? "?";
                 const { bg, text } = avatarColor(name);
                 return (
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: bg }}>
-                    <span className="text-xs font-bold" style={{ color: text }}>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: bg }}
+                  >
+                    <span className="text-xs font-extrabold" style={{ color: text }}>
                       {name[0]?.toUpperCase() ?? "?"}
                     </span>
                   </div>
                 );
               })()
             )}
-            <span className="text-sm text-slate-600 hidden sm:block">
+            <span className="text-sm font-semibold text-slate-700 hidden sm:block">
               {isAdmin ? "Admin" : user?.name}
             </span>
-            <button onClick={handleLogout} className="text-xs text-slate-400 hover:text-red-500 transition">
+            <button
+              onClick={handleLogout}
+              className="text-xs text-slate-400 hover:text-red-500 transition ml-1 font-medium"
+            >
               Sair
             </button>
           </div>
 
-          {/* Mobile menu button */}
-          {!isAdmin && user && (
+          {/* Mobile hamburger */}
+          {user && (
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition"
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition ml-1"
             >
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="w-5 h-0.5 bg-slate-600" />
                 <div className="w-5 h-0.5 bg-slate-600" />
                 <div className="w-5 h-0.5 bg-slate-600" />
@@ -120,15 +151,17 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {menuOpen && !isAdmin && (
+      {/* Mobile drawer */}
+      {menuOpen && user && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-1">
           {navLinks.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className={`block text-sm px-3 py-2 rounded-lg font-medium transition ${
-                pathname === l.href ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50"
+              className={`block text-sm px-3 py-2.5 rounded-xl font-semibold transition ${
+                isActive(l.href)
+                  ? "bg-orange-50 text-orange-600"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
               onClick={() => setMenuOpen(false)}
             >

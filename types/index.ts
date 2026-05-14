@@ -74,3 +74,63 @@ export interface HistoryEntry {
   action: string;
   by: string;
 }
+
+/* ─── Employee / Contract ────────────────────────────────────── */
+export interface Employee {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // Pessoal
+  name: string;
+  cpf?: string;
+  rg?: string;
+  birthDate?: string;
+  photoUrl?: string;
+  photoConsent?: boolean;
+
+  // Contato
+  email: string;
+  personalEmail?: string;
+  phone?: string;
+  cep?: string;
+  address?: string;
+  city?: string;
+
+  // Empresa
+  role?: string;
+  squad?: string;
+  startDate?: string;
+  manager?: string;
+
+  // Contrato
+  contractStart?: string;
+  contractEnd?: string;
+
+  // Formação
+  education?: string;
+
+  // PJ & PIX
+  razaoSocial?: string;
+  cnpj?: string;
+  pixCnpj?: string;
+  pixPf?: string;
+
+  // Extras
+  emergencyName?: string;
+  emergencyPhone?: string;
+  shirtSize?: string;
+  linkedin?: string;
+
+  // Computed / meta
+  completion?: number;
+}
+
+export type ContractStatusKey = "ok" | "atencao" | "vencendo" | "vencido";
+
+export interface ContractStatus {
+  key: ContractStatusKey;
+  days: number;
+  label: string;
+  color: "green" | "blue" | "amber" | "red";
+}

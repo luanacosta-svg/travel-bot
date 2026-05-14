@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
-import type { TravelRequest, ReimbursementRequest, InvoiceUpload, UserSession } from "@/types";
+import ContractMeter from "@/components/ContractMeter";
+import StatusBadge from "@/components/StatusBadge";
+import type { TravelRequest, ReimbursementRequest, InvoiceUpload, UserSession, Employee } from "@/types";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", {
@@ -14,15 +16,24 @@ function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatBR(dateStr?: string) {
+  if (!dateStr) return "—";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<UserSession | null>(null);
-  const [travels, setTravels] = useState<TravelRequest[]>([]);
+  const [user,           setUser]           = useState<UserSession | null>(null);
+  const [employee,       setEmployee]       = useState<Employee | null>(null);
+  const [travels,        setTravels]        = useState<TravelRequest[]>([]);
   const [reimbursements, setReimbursements] = useState<ReimbursementRequest[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceUpload[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [invoices,       setInvoices]       = useState<InvoiceUpload[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [activityFilter, setActivityFilter] = useState<"all" | "travel" | "reimb" | "inv">("all");
 
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
+    fetch("/api/employees/me").then((r) => r.json()).then((d) => setEmployee(d ?? null)).catch(() => {});
     Promise.all([
       fetch("/api/requests/mine").then((r) => r.json()),
       fetch("/api/reembolso/mine").then((r) => r.json()),
@@ -35,31 +46,31 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const firstName = user?.name?.split(" ")[0] ?? "";
-  const pendingTravels = travels.filter((r) => r.status === "pending").length;
-  const pendingReimb = reimbursements.filter((r) => r.status === "pending").length;
-  const pendingInv = invoices.filter((i) => i.status === "pending").length;
-  const totalPending = pendingTravels + pendingReimb + pendingInv;
+  const firstName    = user?.name?.split(" ")[0] ?? "";
+  const completion   = employee?.completion ?? 0;
+  const contractEnd  = employee?.contractEnd;
 
-  // Totais financeiros
-  const totalPagoReimb = reimbursements
-    .filter((r) => r.status === "paid")
-    .reduce((s, r) => s + r.expense.amount, 0);
-  const totalPagoInv = invoices
-    .filter((i) => i.status === "paid")
-    .reduce((s, i) => s + i.invoice.amount, 0);
-  const totalAPagar = reimbursements
-    .filter((r) => r.status === "approved")
-    .reduce((s, r) => s + r.expense.amount, 0)
-    + invoices.filter((i) => i.status === "received")
-      .reduce((s, i) => s + i.invoice.amount, 0);
-
-  const [activityFilter, setActivityFilter] = useState<"all" | "travel" | "reimb" | "inv">("all");
+  const totalPagoReimb = reimbursements.filter((r) => r.status === "paid").reduce((s, r) => s + r.expense.amount, 0);
+  const totalPagoInv   = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.invoice.amount, 0);
+  const totalAPagar    = reimbursements.filter((r) => r.status === "approved").reduce((s, r) => s + r.expense.amount, 0)
+                       + invoices.filter((i) => i.status === "received").reduce((s, i) => s + i.invoice.amount, 0);
 
   const allItems = useMemo(() => [
-    ...travels.map((r) => ({ id: r.id, type: "travel" as const, icon: "✈", title: `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`, date: r.createdAt, status: r.status as string, extra: undefined as string | undefined })),
-    ...reimbursements.map((r) => ({ id: r.id, type: "reimb" as const, icon: "💸", title: r.expense.description, date: r.createdAt, status: r.status as string, extra: formatCurrency(r.expense.amount) })),
-    ...invoices.map((i) => ({ id: i.id, type: "inv" as const, icon: "🧾", title: i.invoice.description, date: i.createdAt, status: i.status as string, extra: formatCurrency(i.invoice.amount) })),
+    ...travels.map((r) => ({
+      id: r.id, type: "travel" as const, icon: "✈️",
+      title: `${r.travel.origin ? r.travel.origin + " → " : ""}${r.travel.destination}${r.travel.eventName ? " · " + r.travel.eventName : ""}`,
+      date: r.createdAt, status: r.status as string, extra: undefined as string | undefined,
+    })),
+    ...reimbursements.map((r) => ({
+      id: r.id, type: "reimb" as const, icon: "💸",
+      title: r.expense.description, date: r.createdAt, status: r.status as string,
+      extra: formatCurrency(r.expense.amount),
+    })),
+    ...invoices.map((i) => ({
+      id: i.id, type: "inv" as const, icon: "🧾",
+      title: i.invoice.description, date: i.createdAt, status: i.status as string,
+      extra: formatCurrency(i.invoice.amount),
+    })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [travels, reimbursements, invoices]);
 
   const recentAll = useMemo(() => {
@@ -67,151 +78,211 @@ export default function DashboardPage() {
     return filtered.slice(0, 8);
   }, [allItems, activityFilter]);
 
-  const statusLabel: Record<string, string> = {
-    pending: "Em análise",
-    options_sent: "Com opções",
-    purchased: "Comprado ✓",
-    approved: "Aprovado ✓",
-    rejected: "Recusado",
-    received: "Recebido ✓",
-    paid: "Pago ✓",
-  };
-
-  const statusColor: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    options_sent: "bg-orange-100 text-orange-700",
-    purchased: "bg-green-100 text-green-700",
-    approved: "bg-blue-100 text-blue-700",
-    rejected: "bg-red-100 text-red-700",
-    received: "bg-blue-100 text-blue-700",
-    paid: "bg-green-100 text-green-700",
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header user={user ?? undefined} title="Início" />
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+      <Header user={user ?? undefined} />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        {/* Boas-vindas */}
-        <div className="bg-orange-500 rounded-2xl p-6 text-white">
-          <p className="text-orange-100 text-sm mb-1">Olá, {firstName || "…"}! 👋</p>
-          <h1 className="text-2xl font-bold">49Pay</h1>
-          <p className="text-orange-100 text-sm mt-1">
-            {totalPending > 0
-              ? `${totalPending} solicitação(ões) em análise`
-              : totalAPagar > 0
-              ? `${formatCurrency(totalAPagar)} a receber em breve`
-              : "Tudo em dia!"}
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-5">
+        {/* ── Welcome banner ── */}
+        <div
+          className="rounded-2xl p-6 text-white relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #FB8423 0%, #F97316 100%)" }}
+        >
+          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.07)" }} />
+          <p className="text-white/90 text-sm mb-1">Olá, {firstName || "…"}! 👋 Bem-vindo de volta</p>
+          <h1 className="text-2xl font-extrabold tracking-tight mb-1">49Pay</h1>
+          <p className="text-white/80 text-sm">
+            Notas fiscais, reembolsos, viagens e seu cadastro — tudo em um só lugar.
           </p>
         </div>
 
-        {/* Ações rápidas */}
+        {/* ── Auto-fill hint (profile complete) ── */}
+        {employee && completion === 100 && (
+          <div className="pay-banner pay-banner--green rounded-2xl">
+            <span className="text-xl flex-shrink-0">✨</span>
+            <div className="flex-1">
+              <p className="font-bold text-sm mb-0.5">Seus dados estão prontos!</p>
+              <p className="text-sm opacity-90">
+                Toda nova solicitação já vem com nome, e-mail, telefone, CNPJ e PIX preenchidos do seu perfil.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Profile completion banner (if incomplete) ── */}
+        {employee && completion < 100 && (
+          <div className="pay-banner pay-banner--orange rounded-2xl">
+            <span className="text-xl flex-shrink-0">📋</span>
+            <div className="flex-1">
+              <p className="font-bold text-sm mb-0.5">Complete seu cadastro ({completion}%)</p>
+              <p className="text-sm opacity-90">
+                Mantemos seus dados aqui para você não precisar reenviar a cada nova NF, viagem ou reembolso.
+              </p>
+            </div>
+            <a
+              href="/perfil"
+              className="flex-shrink-0 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition"
+            >
+              Continuar →
+            </a>
+          </div>
+        )}
+
+        {/* ── No profile yet banner ── */}
+        {!loading && !employee && (
+          <div className="pay-banner pay-banner--amber rounded-2xl">
+            <span className="text-xl flex-shrink-0">📝</span>
+            <div className="flex-1">
+              <p className="font-bold text-sm mb-0.5">Cadastro ainda não preenchido</p>
+              <p className="text-sm opacity-90">
+                Preencha seu perfil para agilizar todas as solicitações.
+              </p>
+            </div>
+            <a
+              href="/perfil"
+              className="flex-shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition"
+            >
+              Preencher agora
+            </a>
+          </div>
+        )}
+
+        {/* ── Quick actions ── */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { href: "/solicitar", icon: "✈", label: "Passagem", sub: "ou ingresso" },
-            { href: "/reembolso", icon: "💸", label: "Reembolso", sub: "despesas" },
-            { href: "/notas-fiscais", icon: "🧾", label: "Nota Fiscal", sub: "upload NF" },
+            { href: "/solicitar",     icon: "✈️", label: "Passagem",    sub: "ou ingresso" },
+            { href: "/reembolso",     icon: "💸", label: "Reembolso",   sub: "despesas",   highlight: true },
+            { href: "/notas-fiscais", icon: "🧾", label: "Nota Fiscal", sub: "upload NF"   },
           ].map((a) => (
             <a
               key={a.href}
               href={a.href}
-              className="bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center gap-1 hover:border-orange-400 hover:bg-orange-50 transition text-center"
+              className="bg-white border rounded-2xl p-5 flex flex-col gap-2 hover:shadow-md transition text-left group"
+              style={{
+                borderColor: a.highlight ? "var(--orange-200)" : "var(--border-soft)",
+                background: a.highlight ? "var(--orange-50)" : "white",
+              }}
             >
-              <span className="text-2xl">{a.icon}</span>
-              <p className="font-semibold text-slate-800 text-sm">{a.label}</p>
+              <span className="text-3xl">{a.icon}</span>
+              <p className="font-extrabold text-slate-800">{a.label}</p>
               <p className="text-xs text-slate-400">{a.sub}</p>
             </a>
           ))}
         </div>
 
-        {/* Resumo financeiro */}
+        {/* ── Profile card shortcut ── */}
+        <a
+          href="/perfil"
+          className="bg-white border rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition"
+          style={{ borderColor: "var(--border-soft)" }}
+        >
+          <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0">
+            👤
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-extrabold text-slate-800">Meu Perfil</span>
+              {completion > 0 && (
+                <span
+                  className={`pill text-xs ${completion === 100 ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
+                >
+                  {completion}%
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-400 truncate">
+              Dados pessoais, contrato, PJ, PIX e contato de emergência
+            </p>
+          </div>
+          <span className="text-slate-300 text-lg flex-shrink-0">→</span>
+        </a>
+
+        {/* ── Financial summary ── */}
         {!loading && (reimbursements.length > 0 || invoices.length > 0) && (
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">A receber</p>
-              <p className="text-xl font-bold text-blue-600">{formatCurrency(totalAPagar)}</p>
-              <p className="text-xs text-slate-400 mt-0.5">aprovados/confirmados</p>
+            <div className="stat-card stat-card--blue rounded-2xl">
+              <p className="text-xs font-extrabold uppercase tracking-wider mb-1" style={{ color: "var(--blue-ink)" }}>A receber</p>
+              <p className="text-2xl font-extrabold" style={{ color: "var(--blue)" }}>{formatCurrency(totalAPagar)}</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--blue-ink)" }}>aprovados/confirmados</p>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Reembolsos pagos</p>
-              <p className="text-xl font-bold text-green-600">{formatCurrency(totalPagoReimb)}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{reimbursements.filter(r => r.status === "paid").length} pagamento(s)</p>
+            <div className="stat-card stat-card--green rounded-2xl">
+              <p className="text-xs font-extrabold uppercase tracking-wider mb-1" style={{ color: "var(--green-ink)" }}>Reembolsos pagos</p>
+              <p className="text-2xl font-extrabold" style={{ color: "var(--green)" }}>{formatCurrency(totalPagoReimb)}</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--green-ink)" }}>{reimbursements.filter((r) => r.status === "paid").length} pagamento(s)</p>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">NFs pagas</p>
-              <p className="text-xl font-bold text-green-600">{formatCurrency(totalPagoInv)}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{invoices.filter(i => i.status === "paid").length} nota(s) fiscal(is)</p>
+            <div className="stat-card stat-card--green rounded-2xl">
+              <p className="text-xs font-extrabold uppercase tracking-wider mb-1" style={{ color: "var(--green-ink)" }}>NFs pagas</p>
+              <p className="text-2xl font-extrabold" style={{ color: "var(--green)" }}>{formatCurrency(totalPagoInv)}</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--green-ink)" }}>{invoices.filter((i) => i.status === "paid").length} nota(s)</p>
             </div>
           </div>
         )}
 
-        {/* Stats de contagem */}
-        {!loading && (travels.length > 0 || reimbursements.length > 0 || invoices.length > 0) && (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: "Viagens", value: travels.length, icon: "✈", color: "bg-orange-50 text-orange-600 border-orange-100" },
-              { label: "Reembolsos", value: reimbursements.length, icon: "💸", color: "bg-amber-50 text-amber-600 border-amber-100" },
-              { label: "Notas Fiscais", value: invoices.length, icon: "🧾", color: "bg-slate-50 text-slate-600 border-slate-200" },
-            ].map((s) => (
-              <div key={s.label} className={`rounded-2xl border p-4 ${s.color}`}>
-                <p className="text-lg mb-1">{s.icon}</p>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-xs font-medium mt-0.5 opacity-80">{s.label}</p>
-              </div>
-            ))}
+        {/* ── Contract reminder (if employee has contract) ── */}
+        {contractEnd && (
+          <div
+            className="bg-white border rounded-2xl p-4 flex items-center gap-4"
+            style={{ borderColor: "var(--border-soft)" }}
+          >
+            <span className="text-2xl flex-shrink-0">📅</span>
+            <div className="flex-1">
+              <p className="font-bold text-slate-800 text-sm">Seu contrato vence em {formatBR(contractEnd)}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Você receberá um lembrete 15 dias antes.</p>
+            </div>
+            <div className="w-40 flex-shrink-0">
+              <ContractMeter contractEnd={contractEnd} />
+            </div>
           </div>
         )}
 
-        {/* Recentes */}
+        {/* ── Recent activity ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-slate-800">Atividade recente</h2>
-            <a href="/minhas-solicitacoes" className="text-sm text-orange-500 font-medium hover:text-orange-600">
+            <h2 className="font-extrabold text-slate-800 text-lg tracking-tight">Atividade recente</h2>
+            <a href="/minhas-solicitacoes" className="text-sm text-orange-500 font-bold hover:text-orange-700">
               Ver tudo →
             </a>
           </div>
 
-          {/* Filtros */}
+          {/* Filters */}
           <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
             {([
-              { key: "all", label: "Tudo", count: allItems.length },
-              { key: "travel", label: "✈ Viagens", count: travels.length },
-              { key: "reimb", label: "💸 Reembolsos", count: reimbursements.length },
-              { key: "inv", label: "🧾 Notas", count: invoices.length },
+              { key: "all",    label: "Tudo",         count: allItems.length },
+              { key: "travel", label: "✈️ Viagens",   count: travels.length },
+              { key: "reimb",  label: "💸 Reembolsos", count: reimbursements.length },
+              { key: "inv",    label: "🧾 Notas",      count: invoices.length },
             ] as const).map((f) => (
               <button
                 key={f.key}
                 onClick={() => setActivityFilter(f.key)}
-                className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${activityFilter === f.key ? "bg-orange-500 text-white border-orange-500" : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"}`}
+                className={`whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
+                  activityFilter === f.key
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"
+                }`}
               >
                 {f.label}{f.count > 0 && ` (${f.count})`}
               </button>
             ))}
           </div>
 
-          {loading && <p className="text-slate-400 text-sm">Carregando...</p>}
-
-          {!loading && allItems.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-              <p className="text-3xl mb-2">📋</p>
-              <p className="text-slate-500 text-sm mb-4">Nenhuma solicitação ainda.</p>
-              <a
-                href={activityFilter === "reimb" ? "/reembolso" : activityFilter === "inv" ? "/notas-fiscais" : "/solicitar"}
-                className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
-              >
-                Começar agora
-              </a>
+          {loading && (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl border border-slate-100 px-4 py-3 h-16 animate-pulse" />
+              ))}
             </div>
           )}
 
-          {!loading && allItems.length > 0 && recentAll.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center">
-              <p className="text-slate-400 text-sm">Nenhum item nessa categoria ainda.</p>
+          {!loading && allItems.length === 0 && (
+            <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center">
+              <p className="text-3xl mb-3">📋</p>
+              <p className="text-slate-400 text-sm mb-4 font-medium">Nenhuma solicitação ainda.</p>
               <a
                 href={activityFilter === "reimb" ? "/reembolso" : activityFilter === "inv" ? "/notas-fiscais" : "/solicitar"}
-                className="inline-block mt-3 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
+                className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition"
               >
-                + Nova solicitação
+                Começar agora
               </a>
             </div>
           )}
@@ -221,16 +292,18 @@ export default function DashboardPage() {
               <a
                 key={item.id}
                 href="/minhas-solicitacoes"
-                className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3 hover:border-orange-200 transition"
+                className="flex items-center gap-3 bg-white rounded-xl border border-slate-100 px-4 py-3 hover:border-orange-200 hover:shadow-sm transition"
               >
-                <span className="text-xl w-8 text-center">{item.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{item.title}</p>
-                  <p className="text-xs text-slate-400">{formatDate(item.date)}{item.extra ? ` · ${item.extra}` : ""}</p>
+                <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-lg flex-shrink-0">
+                  {item.icon}
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${statusColor[item.status] ?? "bg-slate-100 text-slate-600"}`}>
-                  {statusLabel[item.status] ?? item.status}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 truncate">{item.title}</p>
+                  <p className="text-xs text-slate-400">
+                    {formatDate(item.date)}{item.extra ? ` · ${item.extra}` : ""}
+                  </p>
+                </div>
+                <StatusBadge status={item.status as any} />
               </a>
             ))}
           </div>
