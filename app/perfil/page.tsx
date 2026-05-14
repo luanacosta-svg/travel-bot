@@ -15,13 +15,33 @@ const SECTIONS = [
 ];
 
 const ROLES = [
-  "Designer", "Desenvolvedor(a)", "Product Manager", "Marketing",
-  "Financeiro", "Comercial", "Operações", "RH / Pessoas", "Outro",
+  "CEO",
+  "Gerente de Projetos",
+  "Head Comercial",
+  "Head de Produto",
+  "Head de Tecnologia",
+  "Analista de Marketing",
+  "Analista de Tecnologia",
+  "Assistente de Marketing",
+  "Coordenadora Financeira",
+  "Customer Success",
+  "Partnerships & CS Analyst",
+  "BDR",
+  "SDR",
+  "Closer",
+  "Desenvolvedor Pleno",
+  "Outro",
 ];
 
 const SQUADS = [
-  "Design", "Tecnologia", "Produto", "Marketing", "Financeiro",
-  "Comercial", "Operações", "RH", "Gestão",
+  "Diretoria",
+  "Gestão & Finanças",
+  "Corporate",
+  "Produto",
+  "Tecnologia",
+  "Marketing",
+  "Vendas B2C",
+  "Outro",
 ];
 
 const REQUIRED_FIELDS: (keyof Employee)[] = [
@@ -83,6 +103,8 @@ export default function PerfilPage() {
   const [toast,        setToast]        = useState<string | null>(null);
   const [loading,      setLoading]      = useState(true);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [customRole,   setCustomRole]   = useState("");
+  const [customSquad,  setCustomSquad]  = useState("");
 
   const completion = calcCompletion(data);
 
@@ -115,7 +137,16 @@ export default function PerfilPage() {
   }, []);
 
   const set = useCallback((key: keyof Employee, value: string | boolean) => {
-    setData((d) => ({ ...d, [key]: value }));
+    setData((d) => {
+      const updated = { ...d, [key]: value };
+      // Auto-calcula vencimento quando assinatura muda
+      if (key === "contractStart" && typeof value === "string" && value) {
+        const start = new Date(value);
+        start.setFullYear(start.getFullYear() + 1);
+        updated.contractEnd = start.toISOString().split("T")[0];
+      }
+      return updated;
+    });
   }, []);
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -358,16 +389,46 @@ export default function PerfilPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Cargo" required>
-                  <select className={inputCls()} value={data.role ?? ""} onChange={(e) => set("role", e.target.value)}>
+                  <select
+                    className={inputCls()}
+                    value={ROLES.includes(data.role ?? "") ? (data.role ?? "") : (data.role ? "Outro" : "")}
+                    onChange={(e) => {
+                      if (e.target.value === "Outro") { set("role", customRole || "Outro"); }
+                      else { set("role", e.target.value); setCustomRole(""); }
+                    }}
+                  >
                     <option value="">Selecione...</option>
                     {ROLES.map((r) => <option key={r}>{r}</option>)}
                   </select>
+                  {(data.role === "Outro" || (data.role && !ROLES.includes(data.role))) && (
+                    <input
+                      className={inputCls("mt-2")}
+                      placeholder="Digite o cargo..."
+                      value={ROLES.includes(data.role ?? "") ? customRole : (data.role ?? "")}
+                      onChange={(e) => { setCustomRole(e.target.value); set("role", e.target.value); }}
+                    />
+                  )}
                 </Field>
                 <Field label="Squad / Área" required>
-                  <select className={inputCls()} value={data.squad ?? ""} onChange={(e) => set("squad", e.target.value)}>
+                  <select
+                    className={inputCls()}
+                    value={SQUADS.includes(data.squad ?? "") ? (data.squad ?? "") : (data.squad ? "Outro" : "")}
+                    onChange={(e) => {
+                      if (e.target.value === "Outro") { set("squad", customSquad || "Outro"); }
+                      else { set("squad", e.target.value); setCustomSquad(""); }
+                    }}
+                  >
                     <option value="">Selecione...</option>
                     {SQUADS.map((s) => <option key={s}>{s}</option>)}
                   </select>
+                  {(data.squad === "Outro" || (data.squad && !SQUADS.includes(data.squad))) && (
+                    <input
+                      className={inputCls("mt-2")}
+                      placeholder="Digite o squad/área..."
+                      value={SQUADS.includes(data.squad ?? "") ? customSquad : (data.squad ?? "")}
+                      onChange={(e) => { setCustomSquad(e.target.value); set("squad", e.target.value); }}
+                    />
+                  )}
                 </Field>
                 <Field label="Data de entrada na empresa" required>
                   <input className={inputCls()} type="date" value={data.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} />

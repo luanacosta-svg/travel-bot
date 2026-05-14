@@ -6,12 +6,32 @@ import Header from "@/components/Header";
 import type { Employee } from "@/types";
 
 const ROLES = [
-  "Designer", "Desenvolvedor(a)", "Product Manager", "Marketing",
-  "Financeiro", "Comercial", "Operações", "RH / Pessoas", "Outro",
+  "CEO",
+  "Gerente de Projetos",
+  "Head Comercial",
+  "Head de Produto",
+  "Head de Tecnologia",
+  "Analista de Marketing",
+  "Analista de Tecnologia",
+  "Assistente de Marketing",
+  "Coordenadora Financeira",
+  "Customer Success",
+  "Partnerships & CS Analyst",
+  "BDR",
+  "SDR",
+  "Closer",
+  "Desenvolvedor Pleno",
+  "Outro",
 ];
 const SQUADS = [
-  "Design", "Tecnologia", "Produto", "Marketing", "Financeiro",
-  "Comercial", "Operações", "RH", "Gestão",
+  "Diretoria",
+  "Gestão & Finanças",
+  "Corporate",
+  "Produto",
+  "Tecnologia",
+  "Marketing",
+  "Vendas B2C",
+  "Outro",
 ];
 const SHIRT_SIZES = ["PP", "P", "M", "G", "GG", "XGG"];
 
@@ -48,11 +68,13 @@ export default function EditarColaboradorPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [data, setData] = useState<Partial<Employee>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [cepLoading, setCepLoading] = useState(false);
+  const [data,        setData]       = useState<Partial<Employee>>({});
+  const [loading,     setLoading]    = useState(true);
+  const [saving,      setSaving]     = useState(false);
+  const [toast,       setToast]      = useState<{ msg: string; ok: boolean } | null>(null);
+  const [cepLoading,  setCepLoading] = useState(false);
+  const [customRole,  setCustomRole] = useState("");
+  const [customSquad, setCustomSquad] = useState("");
 
   useEffect(() => {
     fetch(`/api/employees/${id}`)
@@ -62,7 +84,15 @@ export default function EditarColaboradorPage() {
   }, [id]);
 
   function set(field: keyof Employee, value: string | boolean) {
-    setData((prev) => ({ ...prev, [field]: value }));
+    setData((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === "contractStart" && typeof value === "string" && value) {
+        const start = new Date(value);
+        start.setFullYear(start.getFullYear() + 1);
+        updated.contractEnd = start.toISOString().split("T")[0];
+      }
+      return updated;
+    });
   }
 
   async function lookupCep(cep: string) {
@@ -201,16 +231,46 @@ export default function EditarColaboradorPage() {
           <Section title="Empresa">
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Cargo">
-                <select className={inputCls()} value={data.role ?? ""} onChange={(e) => set("role", e.target.value)}>
+                <select
+                  className={inputCls()}
+                  value={ROLES.includes(data.role ?? "") ? (data.role ?? "") : (data.role ? "Outro" : "")}
+                  onChange={(e) => {
+                    if (e.target.value === "Outro") { set("role", customRole || "Outro"); }
+                    else { set("role", e.target.value); setCustomRole(""); }
+                  }}
+                >
                   <option value="">Selecione…</option>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
+                {(data.role === "Outro" || (data.role && !ROLES.includes(data.role))) && (
+                  <input
+                    className={inputCls("mt-2")}
+                    placeholder="Digite o cargo..."
+                    value={ROLES.includes(data.role ?? "") ? customRole : (data.role ?? "")}
+                    onChange={(e) => { setCustomRole(e.target.value); set("role", e.target.value); }}
+                  />
+                )}
               </Field>
               <Field label="Squad">
-                <select className={inputCls()} value={data.squad ?? ""} onChange={(e) => set("squad", e.target.value)}>
+                <select
+                  className={inputCls()}
+                  value={SQUADS.includes(data.squad ?? "") ? (data.squad ?? "") : (data.squad ? "Outro" : "")}
+                  onChange={(e) => {
+                    if (e.target.value === "Outro") { set("squad", customSquad || "Outro"); }
+                    else { set("squad", e.target.value); setCustomSquad(""); }
+                  }}
+                >
                   <option value="">Selecione…</option>
                   {SQUADS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+                {(data.squad === "Outro" || (data.squad && !SQUADS.includes(data.squad))) && (
+                  <input
+                    className={inputCls("mt-2")}
+                    placeholder="Digite o squad/área..."
+                    value={SQUADS.includes(data.squad ?? "") ? customSquad : (data.squad ?? "")}
+                    onChange={(e) => { setCustomSquad(e.target.value); set("squad", e.target.value); }}
+                  />
+                )}
               </Field>
               <Field label="Data de entrada">
                 <input className={inputCls()} type="date" value={data.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} />
