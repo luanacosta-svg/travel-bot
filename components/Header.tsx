@@ -79,7 +79,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
         </div>
 
         {/* Desktop nav */}
-        {user && (
+        {(user || isAdmin) && (
           <nav className="hidden md:flex items-center gap-0.5">
             {navLinks.map((l) => (
               <a
@@ -136,7 +136,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
           </div>
 
           {/* Mobile hamburger */}
-          {user && (
+          {(user || isAdmin) && (
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition ml-1"
@@ -152,7 +152,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
       </div>
 
       {/* Mobile drawer */}
-      {menuOpen && user && (
+      {menuOpen && (user || isAdmin) && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-1">
           {navLinks.map((l) => (
             <a
