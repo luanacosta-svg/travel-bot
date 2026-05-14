@@ -133,10 +133,7 @@ function LoginForm() {
                   onBlur={() => setTouched((t) => ({ ...t, name: true }))}
                   placeholder="Seu nome completo"
                   className="w-full border-[1.5px] rounded-xl px-3.5 py-3 text-sm focus:outline-none transition"
-                  style={{
-                    ...inputStyle(nameValid && touched.name, nameError),
-                    focusBorderColor: "#F97316",
-                  }}
+                  style={inputStyle(nameValid && touched.name, nameError)}
                   onFocus={(e) => (e.target.style.borderColor = "#F97316")}
                 />
                 {nameError && <p className="text-xs text-red-600 flex items-center gap-1">⚠ {nameError}</p>}
