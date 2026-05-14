@@ -112,7 +112,18 @@ export default function PerfilPage() {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
     fetch("/api/employees/me")
       .then((r) => r.json())
-      .then((emp) => { if (emp) setData(emp); setLoading(false); })
+      .then((emp) => {
+        if (emp) {
+          // Se tem assinatura mas não tem vencimento, calcula automaticamente
+          if (emp.contractStart && !emp.contractEnd) {
+            const start = new Date(emp.contractStart);
+            start.setFullYear(start.getFullYear() + 1);
+            emp.contractEnd = start.toISOString().split("T")[0];
+          }
+          setData(emp);
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 

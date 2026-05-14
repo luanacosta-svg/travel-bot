@@ -79,7 +79,17 @@ export default function EditarColaboradorPage() {
   useEffect(() => {
     fetch(`/api/employees/${id}`)
       .then((r) => r.json())
-      .then((d) => { setData(d ?? {}); setLoading(false); })
+      .then((d) => {
+        if (d) {
+          if (d.contractStart && !d.contractEnd) {
+            const start = new Date(d.contractStart);
+            start.setFullYear(start.getFullYear() + 1);
+            d.contractEnd = start.toISOString().split("T")[0];
+          }
+          setData(d);
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [id]);
 
