@@ -6,6 +6,78 @@ import Header from "@/components/Header";
 import ContractMeter from "@/components/ContractMeter";
 import type { Employee } from "@/types";
 
+// ── Lembrete modal ────────────────────────────────────────────────────────────
+function LembreteModal({
+  empName,
+  comp,
+  contractEnd,
+  onClose,
+  onSend,
+}: {
+  empName: string;
+  comp: number;
+  contractEnd?: string;
+  onClose: () => void;
+  onSend: (type: "cadastro" | "contrato") => Promise<void>;
+}) {
+  const [sending, setSending] = useState(false);
+
+  async function handle(type: "cadastro" | "contrato") {
+    setSending(true);
+    await onSend(type);
+    setSending(false);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-extrabold text-slate-900 text-lg">Enviar lembrete</h2>
+            <p className="text-sm text-slate-500 mt-0.5">para <strong>{empName}</strong></p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+        </div>
+
+        <p className="text-sm text-slate-600">Escolha o tipo de lembrete a enviar por e-mail:</p>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => handle("cadastro")}
+            disabled={sending}
+            className="w-full text-left border-2 border-slate-200 hover:border-orange-400 rounded-xl p-4 transition group"
+          >
+            <p className="font-bold text-slate-800 group-hover:text-orange-600 transition">📝 Completar cadastro</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Cadastro atual: <strong className={comp >= 100 ? "text-green-600" : "text-orange-500"}>{comp}%</strong> — pede ao colaborador que complete as informações faltantes.
+            </p>
+          </button>
+
+          {contractEnd && (
+            <button
+              onClick={() => handle("contrato")}
+              disabled={sending}
+              className="w-full text-left border-2 border-slate-200 hover:border-orange-400 rounded-xl p-4 transition group"
+            >
+              <p className="font-bold text-slate-800 group-hover:text-orange-600 transition">⏰ Renovação de contrato</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Vencimento: <strong>{new Date(contractEnd).toLocaleDateString("pt-BR")}</strong> — alerta sobre a necessidade de renovação.
+              </p>
+            </button>
+          )}
+        </div>
+
+        {sending && (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span className="animate-spin">⟳</span> Enviando e-mail…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function avatarInitials(name: string) {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 }
@@ -49,8 +121,32 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
 
 export default function ColaboradorDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [emp,     setEmp]     = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [emp,          setEmp]          = useState<Employee | null>(null);
+  const [loading,      setLoading]      = useState(true);
+  const [showLembrete, setShowLembrete] = useState(false);
+  const [toast,        setToast]        = useState<{ msg: string; ok: boolean } | null>(null);
+
+  function showToast(msg: string, ok: boolean) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function sendLembrete(type: "cadastro" | "contrato") {
+    try {
+      const res = await fetch(`/api/employees/${id}/lembrete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) {
+        showToast("Lembrete enviado por e-mail com sucesso!", true);
+      } else {
+        showToast("Falha ao enviar o lembrete. Tente novamente.", false);
+      }
+    } catch {
+      showToast("Erro de conexão ao enviar o lembrete.", false);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/employees/${id}`)
@@ -95,6 +191,26 @@ export default function ColaboradorDetailPage() {
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       <Header isAdmin user={{ name: "Admin", email: "admin@49educacao.com.br" }} />
 
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-lg text-sm font-semibold flex items-center gap-2.5 transition-all ${
+          toast.ok ? "bg-green-500 text-white" : "bg-red-500 text-white"
+        }`}>
+          {toast.ok ? "✅" : "❌"} {toast.msg}
+        </div>
+      )}
+
+      {/* Lembrete modal */}
+      {showLembrete && emp && (
+        <LembreteModal
+          empName={emp.name}
+          comp={emp.completion ?? 0}
+          contractEnd={emp.contractEnd}
+          onClose={() => setShowLembrete(false)}
+          onSend={sendLembrete}
+        />
+      )}
+
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Back */}
         <a href="/admin/colaboradores" className="inline-flex items-center gap-1 text-sm text-slate-500 font-semibold hover:text-orange-500 transition mb-6">
@@ -121,10 +237,16 @@ export default function ColaboradorDetailPage() {
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              <button className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-orange-300 transition">
+              <button
+                onClick={() => setShowLembrete(true)}
+                className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-orange-300 hover:text-orange-600 transition"
+              >
                 ✉️ Enviar lembrete
               </button>
-              <a href={`/admin/colaboradores/${id}/editar`} className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition">
+              <a
+                href={`/admin/colaboradores/${id}/editar`}
+                className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition"
+              >
                 ✏️ Editar
               </a>
             </div>

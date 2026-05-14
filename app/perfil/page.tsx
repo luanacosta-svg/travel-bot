@@ -75,13 +75,14 @@ function inputCls(extra = "") {
 }
 
 export default function PerfilPage() {
-  const [user,    setUser]    = useState<UserSession | null>(null);
-  const [data,    setData]    = useState<Partial<Employee>>({});
-  const [active,  setActive]  = useState("pessoal");
-  const [saving,  setSaving]  = useState(false);
-  const [savedAt, setSavedAt] = useState<Date | null>(null);
-  const [toast,   setToast]   = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user,         setUser]         = useState<UserSession | null>(null);
+  const [data,         setData]         = useState<Partial<Employee>>({});
+  const [active,       setActive]       = useState("pessoal");
+  const [saving,       setSaving]       = useState(false);
+  const [savedAt,      setSavedAt]      = useState<Date | null>(null);
+  const [toast,        setToast]        = useState<string | null>(null);
+  const [loading,      setLoading]      = useState(true);
+  const [photoLoading, setPhotoLoading] = useState(false);
 
   const completion = calcCompletion(data);
 
@@ -116,6 +117,35 @@ export default function PerfilPage() {
   const set = useCallback((key: keyof Employee, value: string | boolean) => {
     setData((d) => ({ ...d, [key]: value }));
   }, []);
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setToast("Foto muito grande. Máximo 2 MB.");
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setPhotoLoading(true);
+    const form = new FormData();
+    form.append("photo", file);
+    try {
+      const res = await fetch("/api/employees/me/photo", { method: "POST", body: form });
+      const json = await res.json();
+      if (res.ok && json.photoUrl) {
+        set("photoUrl", json.photoUrl);
+        setToast("Foto atualizada com sucesso!");
+      } else {
+        setToast(json.error ?? "Erro ao enviar a foto.");
+      }
+    } catch {
+      setToast("Erro de conexão ao enviar a foto.");
+    }
+    setPhotoLoading(false);
+    setTimeout(() => setToast(null), 3000);
+    // reset input so same file can be re-selected
+    e.target.value = "";
+  }
 
   async function lookupCEP(cep: string) {
     const clean = cep.replace(/\D/g, "");
@@ -237,18 +267,27 @@ export default function PerfilPage() {
               </div>
               {/* Photo */}
               <div className="photo-uploader mb-5">
-                <div className="photo-uploader__circle">
+                <div className="photo-uploader__circle overflow-hidden">
                   {data.photoUrl
-                    ? <img src={data.photoUrl} alt="" />
+                    ? <img src={data.photoUrl} alt="Foto de perfil" className="w-full h-full object-cover" />
                     : <span>{data.name?.[0]?.toUpperCase() ?? user?.name?.[0]?.toUpperCase() ?? "?"}</span>}
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-sm text-slate-800 mb-1">Foto de perfil</p>
-                  <p className="text-xs text-slate-400 mb-3">JPG ou PNG · 1 MB máx · ideal 800×800 px</p>
-                  <div className="flex gap-2 flex-wrap">
-                    <button type="button" className="text-sm border border-slate-200 hover:border-orange-400 text-slate-600 font-semibold px-3 py-1.5 rounded-xl transition">
-                      📸 Enviar foto
-                    </button>
+                  <p className="text-xs text-slate-400 mb-3">JPG ou PNG · 2 MB máx · ideal 800×800 px</p>
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <label className={`cursor-pointer text-sm border border-slate-200 hover:border-orange-400 text-slate-600 font-semibold px-3 py-1.5 rounded-xl transition ${photoLoading ? "opacity-50 pointer-events-none" : ""}`}>
+                      {photoLoading
+                        ? <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border-2 border-slate-300 border-t-orange-500 rounded-full animate-spin inline-block" /> Enviando…</span>
+                        : "📸 Enviar foto"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                        disabled={photoLoading}
+                      />
+                    </label>
                     {data.photoUrl && (
                       <button type="button" onClick={() => set("photoUrl", "")} className="text-sm text-red-500 font-semibold px-3 py-1.5 rounded-xl hover:bg-red-50 transition">
                         Remover

@@ -44,6 +44,29 @@ function formatBR(dateStr?: string) {
   return `${d}/${m}/${y}`;
 }
 
+function exportContratosCSV(employees: EnrichedEmployee[], filterLabel: string) {
+  const headers = ["Nome", "E-mail", "Cargo", "Squad", "Cidade", "Início contrato", "Vencimento contrato", "Dias restantes", "Status"];
+  const statusLabel: Record<string, string> = {
+    vencido: "Vencido", vencendo: "Vencendo", atencao: "Atenção", ok: "Em dia",
+  };
+  const rows = employees.map((e) => [
+    e.name, e.email, e.role ?? "", e.squad ?? "", e.city ?? "",
+    e.contractStart ?? "", e.contractEnd ?? "",
+    String(e._days < 0 ? `Vencido há ${Math.abs(e._days)}d` : `${e._days}d`),
+    statusLabel[e._key] ?? e._key,
+  ]);
+  const csv = [headers, ...rows]
+    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `contratos-${filterLabel}-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ContratosPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading,   setLoading]   = useState(true);
@@ -125,7 +148,10 @@ export default function ContratosPage() {
               </button>
             ))}
           </div>
-          <button className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 transition self-start sm:self-auto">
+          <button
+            onClick={() => exportContratosCSV(displayed, filter)}
+            className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 transition self-start sm:self-auto"
+          >
             ↓ Exportar relatório
           </button>
         </div>
@@ -186,9 +212,12 @@ export default function ContratosPage() {
                       Ver
                     </a>
                     {(info.key === "vencendo" || info.key === "vencido") && (
-                      <button className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-3 py-1.5 rounded-xl transition">
+                      <a
+                        href={`/admin/colaboradores/${e.id}/editar#contrato`}
+                        className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-3 py-1.5 rounded-xl transition"
+                      >
                         Iniciar aditivo
-                      </button>
+                      </a>
                     )}
                   </div>
                 </div>

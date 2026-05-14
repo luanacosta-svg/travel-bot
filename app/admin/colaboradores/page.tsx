@@ -39,6 +39,29 @@ function contractStatusKey(contractEnd?: string): string {
   return "ok";
 }
 
+function exportCSV(employees: Employee[]) {
+  const headers = [
+    "Nome", "E-mail", "Cargo", "Squad", "Cidade",
+    "Início contrato", "Vencimento contrato", "Cadastro %",
+    "CNPJ", "PIX CNPJ", "PIX PF",
+  ];
+  const rows = employees.map((e) => [
+    e.name, e.email, e.role ?? "", e.squad ?? "", e.city ?? "",
+    e.contractStart ?? "", e.contractEnd ?? "", String(e.completion ?? 0),
+    e.cnpj ?? "", e.pixCnpj ?? "", e.pixPf ?? "",
+  ]);
+  const csv = [headers, ...rows]
+    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `colaboradores-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ColaboradoresPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading,   setLoading]   = useState(true);
@@ -85,7 +108,10 @@ export default function ColaboradoresPage() {
             <p className="text-sm text-slate-500 mt-0.5">Substitui a planilha. Tudo aqui, sempre atualizado.</p>
           </div>
           <div className="flex gap-2">
-            <button className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 hover:bg-white transition">
+            <button
+              onClick={() => exportCSV(filtered)}
+              className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 hover:bg-white transition"
+            >
               ↓ Exportar CSV
             </button>
             <a href="/admin/colaboradores/novo" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition">

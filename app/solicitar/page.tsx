@@ -1,19 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { AIRPORTS } from "@/lib/airports";
-import type { UserSession } from "@/types";
+import type { UserSession, TravelRequest } from "@/types";
 
 type TravelType = "flight" | "event" | "both";
 
-export default function SolicitarPage() {
+function SolicitarForm() {
   const router = useRouter();
-  const [user, setUser] = useState<UserSession | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [type, setType] = useState<TravelType>("flight");
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+
+  const [user,       setUser]       = useState<UserSession | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [fetching,   setFetching]   = useState(!!editId);
+  const [error,      setError]      = useState("");
+  const [type,       setType]       = useState<TravelType>("flight");
+
+  // Controlled fields (needed for edit pre-fill)
+  const [origin,          setOrigin]          = useState("");
+  const [destination,     setDestination]     = useState("");
+  const [departureDate,   setDepartureDate]   = useState("");
+  const [returnDate,      setReturnDate]      = useState("");
+  const [preferredTimes,  setPreferredTimes]  = useState("");
+  const [passengers,      setPassengers]      = useState("1");
+  const [eventName,       setEventName]       = useState("");
+  const [notes,           setNotes]           = useState("");
+  const [phone,           setPhone]           = useState("");
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -21,19 +36,68 @@ export default function SolicitarPage() {
       .then((d) => setUser(d.user ?? null));
   }, []);
 
+  // Load existing request for edit mode
+  useEffect(() => {
+    if (!editId) return;
+    fetch("/api/requests/mine")
+      .then((r) => r.json())
+      .then((list: TravelRequest[]) => {
+        const req = list.find((r) => r.id === editId);
+        if (req && req.status === "pending") {
+          const t = req.travel;
+          setType((t.type as TravelType) ?? "flight");
+          setOrigin(t.origin ?? "");
+          setDestination(t.destination ?? "");
+          setDepartureDate(t.departureDate ?? "");
+          setReturnDate(t.returnDate ?? "");
+          setPreferredTimes(t.preferredTimes ?? "");
+          setPassengers(String(t.passengers ?? 1));
+          setEventName(t.eventName ?? "");
+          setNotes(t.notes ?? "");
+          setPhone(req.requester.phone ?? "");
+        } else if (req && req.status !== "pending") {
+          setError("Só é possível editar solicitações com status 'Em análise'.");
+        }
+        setFetching(false);
+      })
+      .catch(() => setFetching(false));
+  }, [editId]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const form = e.currentTarget;
-    const data = Object.fromEntries(new FormData(form).entries());
+    const payload = {
+      type,
+      name: user?.name ?? "",
+      email: user?.email ?? "",
+      phone,
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      preferredTimes,
+      passengers,
+      eventName,
+      notes,
+    };
 
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    let res: Response;
+    if (editId) {
+      // Update existing request
+      res = await fetch(`/api/requests/${editId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ travel: payload }),
+      });
+    } else {
+      res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
 
     setLoading(false);
     if (!res.ok) { setError("Ocorreu um erro. Tente novamente."); return; }
@@ -43,15 +107,35 @@ export default function SolicitarPage() {
   const needsFlight = type === "flight" || type === "both";
   const needsEvent = type === "event" || type === "both";
 
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header user={user ?? undefined} title={editId ? "Editar solicitação" : "Nova solicitação"} />
+        <div className="max-w-5xl mx-auto px-4 py-10 space-y-4">
+          {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-2xl border border-slate-100 h-32 animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header user={user ?? undefined} title="Nova solicitação" />
+      <Header user={user ?? undefined} title={editId ? "Editar solicitação" : "Nova solicitação"} />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Nova solicitação</h1>
+          {editId && (
+            <a href="/minhas-solicitacoes" className="inline-flex items-center gap-1 text-sm text-slate-500 font-semibold hover:text-orange-500 transition mb-3 block">
+              ← Voltar para minhas solicitações
+            </a>
+          )}
+          <h1 className="text-2xl font-bold text-slate-800">
+            {editId ? "Editar solicitação" : "Nova solicitação"}
+          </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Preencha os dados e a equipe de compras entrará em contato.
+            {editId
+              ? "Atualize os dados abaixo. Só é possível editar enquanto a solicitação estiver em análise."
+              : "Preencha os dados e a equipe de compras entrará em contato."}
           </p>
         </div>
 
@@ -101,20 +185,20 @@ export default function SolicitarPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nome *</label>
                 <input
-                  name="name"
                   required
-                  defaultValue={user?.name ?? ""}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50"
+                  value={user?.name ?? ""}
+                  readOnly
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-slate-50 text-slate-400 cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">E-mail *</label>
                 <input
-                  name="email"
                   type="email"
                   required
-                  defaultValue={user?.email ?? ""}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50"
+                  value={user?.email ?? ""}
+                  readOnly
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-slate-50 text-slate-400 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -122,7 +206,8 @@ export default function SolicitarPage() {
                   WhatsApp
                 </label>
                 <input
-                  name="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="(11) 99999-9999"
                 />
@@ -142,9 +227,10 @@ export default function SolicitarPage() {
                     Cidade / aeroporto de origem *
                   </label>
                   <input
-                    name="origin"
                     required={needsFlight}
                     list="airports"
+                    value={origin}
+                    onChange={(e) => setOrigin(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: GRU – São Paulo (Guarulhos)"
                   />
@@ -154,9 +240,10 @@ export default function SolicitarPage() {
                     Destino *
                   </label>
                   <input
-                    name="destination"
                     required
                     list="airports"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: BSB – Brasília"
                   />
@@ -166,9 +253,10 @@ export default function SolicitarPage() {
                     Data de ida *
                   </label>
                   <input
-                    name="departureDate"
                     type="date"
                     required={needsFlight}
+                    value={departureDate}
+                    onChange={(e) => setDepartureDate(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -177,8 +265,9 @@ export default function SolicitarPage() {
                     Data de volta
                   </label>
                   <input
-                    name="returnDate"
                     type="date"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -187,7 +276,8 @@ export default function SolicitarPage() {
                     Horários preferidos
                   </label>
                   <input
-                    name="preferredTimes"
+                    value={preferredTimes}
+                    onChange={(e) => setPreferredTimes(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Ex: manhã, após 14h"
                   />
@@ -197,12 +287,12 @@ export default function SolicitarPage() {
                     Passageiros *
                   </label>
                   <input
-                    name="passengers"
                     type="number"
                     min="1"
                     max="9"
-                    defaultValue="1"
                     required={needsFlight}
+                    value={passengers}
+                    onChange={(e) => setPassengers(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -222,8 +312,9 @@ export default function SolicitarPage() {
                     Nome do evento *
                   </label>
                   <input
-                    name="eventName"
                     required={needsEvent}
+                    value={eventName}
+                    onChange={(e) => setEventName(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Nome completo do evento"
                   />
@@ -234,8 +325,9 @@ export default function SolicitarPage() {
                       Cidade do evento *
                     </label>
                     <input
-                      name="destination"
                       required
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
                       className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="Ex: São Paulo"
                     />
@@ -251,8 +343,9 @@ export default function SolicitarPage() {
               Observações
             </label>
             <textarea
-              name="notes"
               rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
               placeholder="Preferências, restrições alimentares, bagagem, necessidades especiais..."
             />
@@ -269,10 +362,24 @@ export default function SolicitarPage() {
             disabled={loading}
             className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3.5 rounded-xl transition text-sm"
           >
-            {loading ? "Enviando..." : "Enviar solicitação"}
+            {loading
+              ? "Enviando..."
+              : editId ? "Salvar alterações" : "Enviar solicitação"}
           </button>
         </form>
       </main>
     </div>
+  );
+}
+
+export default function SolicitarPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <SolicitarForm />
+    </Suspense>
   );
 }

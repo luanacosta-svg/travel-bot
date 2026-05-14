@@ -3,3 +3,10 @@ node_modules/
 .env
 .env.local
 data/requests.json
+data/reimbursements.json
+data/invoices.json
+data/employees.json
+data/notifications.json
+data/uploads/
+.claude/
+tsconfig.tsbuildinfo
