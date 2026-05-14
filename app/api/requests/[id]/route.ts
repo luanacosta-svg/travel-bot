@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequest, saveRequest, deleteRequest } from "@/lib/store";
 import { decodeSession } from "@/lib/session";
+import { createNotification } from "@/lib/notificationStore";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -37,9 +38,21 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 
   if (admin) {
+    const prevStatus = item.status;
     if (body.status) item.status = body.status;
     if (body.managerMessage !== undefined) item.managerMessage = body.managerMessage;
     if (body.purchaseInfo !== undefined) item.purchaseInfo = body.purchaseInfo;
+
+    if (body.status && body.status !== prevStatus) {
+      const dest = `${item.travel.origin ? item.travel.origin + " → " : ""}${item.travel.destination}`;
+      const notifMap: Record<string, { icon: string; tone: "green"|"blue"|"amber"|"red"; title: string; body: string }> = {
+        options_sent: { icon: "📋", tone: "amber", title: "Opções de viagem enviadas", body: `Confira as opções para ${dest} e escolha a melhor.` },
+        purchased:    { icon: "✈️", tone: "green", title: "Passagem comprada!",        body: `Sua viagem para ${dest} foi comprada. Veja os detalhes no app.` },
+      };
+      if (notifMap[body.status]) {
+        createNotification(item.requester.email, notifMap[body.status]);
+      }
+    }
   } else {
     if (body.travel) item.travel = { ...item.travel, ...body.travel };
   }

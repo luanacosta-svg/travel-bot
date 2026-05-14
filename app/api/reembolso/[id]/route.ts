@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReimbursement, saveReimbursement, deleteReimbursement } from "@/lib/reimbursementStore";
 import { decodeSession } from "@/lib/session";
 import { sendReimbursementStatusUpdate, sendReimbursementPaidNotification } from "@/lib/email";
+import { createNotification } from "@/lib/notificationStore";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -52,8 +53,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       });
       if (body.status === "paid") {
         sendReimbursementPaidNotification(item).catch((e) => console.error("Email error:", e));
+        createNotification(item.requester.email, {
+          icon: "💸", tone: "green",
+          title: "Reembolso pago!",
+          body: `"${item.expense.description}" · R$ ${item.expense.amount.toFixed(2).replace(".", ",")} foi pago.`,
+        });
       } else {
         sendReimbursementStatusUpdate(item).catch((e) => console.error("Email error:", e));
+        const notifMap: Record<string, { icon: string; tone: "green"|"blue"|"amber"|"red"; title: string; body: string }> = {
+          approved: { icon: "✓",  tone: "green", title: "Reembolso aprovado",  body: `"${item.expense.description}" foi aprovado e será pago em breve.` },
+          rejected: { icon: "✕",  tone: "red",   title: "Reembolso recusado",  body: `"${item.expense.description}" foi recusado. Veja o painel para mais detalhes.` },
+        };
+        if (notifMap[body.status]) {
+          createNotification(item.requester.email, notifMap[body.status]);
+        }
       }
     }
   } else {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getInvoice, saveInvoice, deleteInvoice } from "@/lib/invoiceStore";
 import { decodeSession } from "@/lib/session";
 import { sendInvoiceStatusUpdate, sendInvoicePaidNotification } from "@/lib/email";
+import { createNotification } from "@/lib/notificationStore";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -45,8 +46,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       item.history.push({ date: new Date().toISOString(), action: label, by: "Admin" });
       if (body.status === "paid") {
         sendInvoicePaidNotification(item).catch((e) => console.error("Email error:", e));
+        createNotification(item.requester.email, {
+          icon: "💸", tone: "green",
+          title: "NF paga!",
+          body: `"${item.invoice.description}" · R$ ${item.invoice.amount.toFixed(2).replace(".", ",")} foi paga.`,
+        });
       } else {
         sendInvoiceStatusUpdate(item).catch((e) => console.error("Email error:", e));
+        const notifMap: Record<string, { icon: string; tone: "green"|"blue"|"amber"|"red"; title: string; body: string }> = {
+          received: { icon: "📥", tone: "blue",  title: "NF recebida pelo time",  body: `"${item.invoice.description}" foi recebida e está em análise.` },
+          rejected: { icon: "✕",  tone: "red",   title: "NF recusada",            body: `"${item.invoice.description}" foi recusada. Veja o painel para mais detalhes.` },
+        };
+        if (notifMap[body.status]) {
+          createNotification(item.requester.email, notifMap[body.status]);
+        }
       }
     }
   }
