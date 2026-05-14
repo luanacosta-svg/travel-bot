@@ -184,7 +184,7 @@ export default function PerfilPage() {
               </p>
             </div>
             <div className="sm:min-w-[200px] sm:text-right">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Completude</p>
+              <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Cadastro</p>
               <p className="text-4xl font-extrabold text-orange-500 leading-none mb-2">{completion}%</p>
               <div className="progress-bar mb-2">
                 <div className="progress-bar__fill" style={{ width: `${completion}%` }} />
