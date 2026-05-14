@@ -114,11 +114,17 @@ export default function PerfilPage() {
       .then((r) => r.json())
       .then((emp) => {
         if (emp) {
-          // Se tem assinatura mas não tem vencimento, calcula automaticamente
+          // Se tem assinatura mas não tem vencimento, calcula e salva automaticamente
           if (emp.contractStart && !emp.contractEnd) {
             const start = new Date(emp.contractStart);
             start.setFullYear(start.getFullYear() + 1);
             emp.contractEnd = start.toISOString().split("T")[0];
+            // Salva silenciosamente para sincronizar o completion% com o servidor
+            fetch("/api/employees/me", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(emp),
+            }).catch(() => {});
           }
           setData(emp);
         }
