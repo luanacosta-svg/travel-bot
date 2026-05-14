@@ -704,12 +704,18 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
             <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(inv.createdAt)}</span></div>
           </div>
 
-          <div className="flex items-center gap-4 flex-wrap">
-            <a href={`/api/notas-fiscais/${inv.id}/file`} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
-              📄 Ver / baixar nota fiscal
-            </a>
-          </div>
+          {inv.invoice.invoiceFile && (
+            <div className="flex items-center gap-4 flex-wrap">
+              <a
+                href={`/api/notas-fiscais/file/${inv.invoice.invoiceFile}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-2 rounded-xl transition"
+              >
+                📎 Ver anexo da NF
+              </a>
+            </div>
+          )}
 
           {inv.status !== "paid" && (
             <>

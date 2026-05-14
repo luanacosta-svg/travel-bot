@@ -374,6 +374,16 @@ function InvoiceCard({ inv, onDelete }: { inv: InvoiceUpload; onDelete: () => vo
           {inv.invoice.invoiceNumber && <p><span className="text-slate-400">Número da NF:</span> <span className="font-semibold">{inv.invoice.invoiceNumber}</span></p>}
           {inv.invoice.invoiceDate && <p><span className="text-slate-400">Data de emissão:</span> {new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>}
           <p><span className="text-slate-400">Valor:</span> <span className="font-semibold">{formatCurrency(inv.invoice.amount)}</span></p>
+          {inv.invoice.invoiceFile && (
+            <a
+              href={`/api/notas-fiscais/file/${inv.invoice.invoiceFile}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-2 rounded-xl transition"
+            >
+              📎 Ver anexo da NF
+            </a>
+          )}
           {inv.paymentDueDate && inv.status !== "paid" && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-2">
               <span className="text-blue-500">📅</span>
