@@ -219,7 +219,7 @@ function LoginForm() {
 
         <p className="text-center mt-5 text-white/80 text-sm">
           Dúvidas?{" "}
-          <a href="#" className="text-white font-bold underline underline-offset-2">
+          <a href="https://wa.me/5548996843058" target="_blank" rel="noopener noreferrer" className="text-white font-bold underline underline-offset-2">
             Fale com nosso time no WhatsApp
           </a>
         </p>
