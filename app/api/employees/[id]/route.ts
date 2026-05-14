@@ -1,11 +1,19 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { NextRequest, NextResponse } from "next/server";
+import { decodeSession } from "@/lib/session";
 import { getEmployee, saveEmployee, deleteEmployee, calcCompletion } from "@/lib/employeeStore";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+function getAuth(req: NextRequest) {
+  const adminCookie = req.cookies.get("tb_admin");
+  const isAdmin = !!adminCookie?.value;
+  const userCookie = req.cookies.get("tb_user");
+  const user = userCookie ? decodeSession(userCookie.value) : null;
+  return { isAdmin, user };
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getSession();
-  if (!session.isAdmin && !session.user) {
+  const { isAdmin, user } = getAuth(req);
+  if (!isAdmin && !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -14,10 +22,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   return NextResponse.json(emp);
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getSession();
-  if (!session.isAdmin && !session.user) {
+  const { isAdmin, user } = getAuth(req);
+  if (!isAdmin && !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,10 +39,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getSession();
-  if (!session.isAdmin) {
+  const { isAdmin } = getAuth(req);
+  if (!isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   deleteEmployee(id);
