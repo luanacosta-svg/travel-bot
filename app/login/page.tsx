@@ -213,12 +213,7 @@ function LoginForm() {
           </form>
 
           <p className="text-xs text-slate-400 text-center mt-4 leading-relaxed">
-            Ao entrar você concorda com os termos de uso da 49 Educação.{" "}
-            <br />
-            Primeira vez aqui?{" "}
-            <a href="#" className="text-orange-500 font-bold hover:text-orange-700">
-              Veja o guia
-            </a>
+            Ao entrar você concorda com os termos de uso da 49 Educação.
           </p>
         </div>
 
