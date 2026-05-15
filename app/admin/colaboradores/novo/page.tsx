@@ -71,7 +71,6 @@ export default function NovoColaboradorPage() {
   const [customRole,  setCustomRole]  = useState("");
   const [squad,       setSquad]       = useState("");
   const [customSquad, setCustomSquad] = useState("");
-  const [startDate,   setStartDate]   = useState("");
   const [manager,     setManager]     = useState("");
   const [contractStart, setContractStart] = useState("");
   const [contractEnd,   setContractEnd]   = useState("");
@@ -97,7 +96,6 @@ export default function NovoColaboradorPage() {
       email,
       role: role === "Outro" ? customRole : role,
       squad: squad === "Outro" ? customSquad : squad,
-      startDate,
       manager,
       contractStart,
       contractEnd,
@@ -224,14 +222,6 @@ export default function NovoColaboradorPage() {
                     onChange={(e) => setCustomSquad(e.target.value)}
                   />
                 )}
-              </Field>
-              <Field label="Data de entrada">
-                <input
-                  className={inputCls()}
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
               </Field>
               <Field label="Gestor direto">
                 <input

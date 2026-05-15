@@ -282,9 +282,6 @@ export default function EditarColaboradorPage() {
                   />
                 )}
               </Field>
-              <Field label="Data de entrada">
-                <input className={inputCls()} type="date" value={data.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} />
-              </Field>
               <Field label="Gestor direto">
                 <input className={inputCls()} value={data.manager ?? ""} onChange={(e) => set("manager", e.target.value)} />
               </Field>

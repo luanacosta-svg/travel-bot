@@ -44,7 +44,7 @@ export function deleteEmployee(id: string): void {
 
 const REQUIRED_FIELDS: (keyof Employee)[] = [
   "name", "email", "personalEmail", "phone", "cpf", "birthDate",
-  "role", "squad", "startDate", "city", "address", "cep",
+  "role", "squad", "city", "address", "cep",
   "contractStart", "contractEnd", "education",
   "razaoSocial", "cnpj", "pixCnpj", "pixPf",
   "emergencyName", "emergencyPhone",

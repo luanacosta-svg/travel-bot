@@ -46,7 +46,7 @@ const SQUADS = [
 
 const REQUIRED_FIELDS: (keyof Employee)[] = [
   "name", "email", "personalEmail", "phone", "cpf", "birthDate",
-  "role", "squad", "startDate", "city", "address", "cep",
+  "role", "squad", "city", "address", "cep",
   "contractStart", "contractEnd", "education",
   "razaoSocial", "cnpj", "pixCnpj", "pixPf",
   "emergencyName", "emergencyPhone",
@@ -446,9 +446,6 @@ export default function PerfilPage() {
                       onChange={(e) => { setCustomSquad(e.target.value); set("squad", e.target.value); }}
                     />
                   )}
-                </Field>
-                <Field label="Data de entrada na empresa" required>
-                  <input className={inputCls()} type="date" value={data.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} />
                 </Field>
                 <Field label="Gestor direto (opcional)" hint="Squad lead ou responsável imediato">
                   <input className={inputCls()} value={data.manager ?? ""} onChange={(e) => set("manager", e.target.value)} placeholder="Nome do gestor" />
