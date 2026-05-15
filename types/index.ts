@@ -124,6 +124,9 @@ export interface Employee {
 
   // Computed / meta
   completion?: number;
+
+  // Auth
+  passwordHash?: string;
 }
 
 export type ContractStatusKey = "ok" | "atencao" | "vencendo" | "vencido";

@@ -1,6 +1,26 @@
 import fs from "fs";
 import path from "path";
+import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import type { Employee, ContractStatus, ContractStatusKey } from "@/types";
+
+// ─── Password helpers ─────────────────────────────────────────────
+
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+export function verifyPassword(password: string, stored: string): boolean {
+  try {
+    const [salt, hash] = stored.split(":");
+    const hashBuf    = Buffer.from(hash, "hex");
+    const attempt    = scryptSync(password, salt, 64);
+    return hashBuf.length === attempt.length && timingSafeEqual(hashBuf, attempt);
+  } catch {
+    return false;
+  }
+}
 
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "employees.json");

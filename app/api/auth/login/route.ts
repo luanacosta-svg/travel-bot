@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { encodeSession } from "@/lib/session";
+import { getEmployeeByEmail, saveEmployee, hashPassword, verifyPassword } from "@/lib/employeeStore";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -13,30 +14,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Requisição inválida" }, { status: 400 });
   }
 
-  const { name, email } = body as Record<string, unknown>;
+  const { email, password, confirmPassword } = body as Record<string, unknown>;
 
-  if (typeof name !== "string" || typeof email !== "string") {
-    return NextResponse.json({ error: "Nome e e-mail são obrigatórios" }, { status: 400 });
+  if (typeof email !== "string" || !email.trim()) {
+    return NextResponse.json({ error: "E-mail obrigatório" }, { status: 400 });
   }
 
-  const cleanName  = name.trim();
   const cleanEmail = email.trim().toLowerCase();
 
-  if (!cleanName || cleanName.length < 2 || cleanName.length > 200) {
-    return NextResponse.json({ error: "Nome inválido" }, { status: 400 });
-  }
-  if (!cleanEmail || !cleanEmail.includes("@") || cleanEmail.length > 200) {
-    return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
+  const employee = getEmployeeByEmail(cleanEmail);
+  if (!employee) {
+    return NextResponse.json(
+      { error: "E-mail não cadastrado. Fale com o RH para ser adicionado ao sistema." },
+      { status: 401 }
+    );
   }
 
-  const session = encodeSession({ name: cleanName, email: cleanEmail });
+  if (typeof password !== "string" || password.length < 8) {
+    return NextResponse.json({ error: "Senha deve ter pelo menos 8 caracteres" }, { status: 400 });
+  }
+
+  if (employee.passwordHash) {
+    // Usuário já tem senha — verificar
+    if (!verifyPassword(password, employee.passwordHash)) {
+      return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+    }
+  } else {
+    // Primeiro login — criar senha
+    if (typeof confirmPassword !== "string" || confirmPassword !== password) {
+      return NextResponse.json({ error: "As senhas não coincidem" }, { status: 400 });
+    }
+    employee.passwordHash = hashPassword(password);
+    employee.updatedAt    = new Date().toISOString();
+    saveEmployee(employee);
+  }
+
+  const session = encodeSession({ name: employee.name, email: employee.email });
 
   const res = NextResponse.json({ success: true });
   res.cookies.set("tb_user", session, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge:   60 * 60 * 24 * 7, // 7 dias (era 30)
+    maxAge:   60 * 60 * 24 * 7,
     path:     "/",
   });
   return res;
