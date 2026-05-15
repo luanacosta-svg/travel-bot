@@ -13,9 +13,10 @@ function getAuth(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { isAdmin, user } = getAuth(req);
-  if (!isAdmin && !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isAdmin } = getAuth(req);
+  // Listagem completa (com PII) é restrita a admin
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const all = getAllEmployees();
   return NextResponse.json(all);
