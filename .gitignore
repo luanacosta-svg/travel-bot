@@ -1,5 +1,7 @@
 .next/
+node_modules
 node_modules/
+public/mockup-preview.html
 .env
 .env.local
 data/requests.json
