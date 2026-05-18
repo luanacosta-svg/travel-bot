@@ -306,7 +306,7 @@ function LoginForm() {
               {step === "create" && (
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
-                    <p className="text-sm font-bold text-orange-700">👋 Olá, {employeeName.split(" ")[0]}!</p>
+                    <p className="text-sm font-bold text-orange-700">👋 Olá, {(employeeName || "").split(" ")[0] || "bem-vindo"}!</p>
                     <p className="text-xs text-orange-600 mt-0.5">É seu primeiro acesso. Crie uma senha para continuar.</p>
                   </div>
 

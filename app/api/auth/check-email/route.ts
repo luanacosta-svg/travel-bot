@@ -13,8 +13,12 @@ export async function GET(req: NextRequest) {
   const emp = getEmployeeByEmail(email);
 
   if (!emp) {
-    // E-mail autorizado mas ainda não tem registro — primeiro acesso
-    return NextResponse.json({ exists: true, hasPassword: false, name: null, isNew: true });
+    // E-mail autorizado mas ainda não tem registro — gera nome a partir do email
+    const displayName = email
+      .split("@")[0]
+      .replace(".", " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return NextResponse.json({ exists: true, hasPassword: false, name: displayName, isNew: true });
   }
 
   return NextResponse.json({
