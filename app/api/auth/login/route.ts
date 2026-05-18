@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { encodeSession } from "@/lib/session";
 import { getEmployeeByEmail, saveEmployee, hashPassword, verifyPassword } from "@/lib/employeeStore";
+import { ALLOWED_EMAILS } from "@/lib/allowedEmails";
+import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -22,12 +24,26 @@ export async function POST(req: NextRequest) {
 
   const cleanEmail = email.trim().toLowerCase();
 
-  const employee = getEmployeeByEmail(cleanEmail);
-  if (!employee) {
+  if (!ALLOWED_EMAILS.has(cleanEmail)) {
     return NextResponse.json(
-      { error: "E-mail não cadastrado. Fale com o RH para ser adicionado ao sistema." },
+      { error: "E-mail não autorizado. Fale com o RH." },
       { status: 401 }
     );
+  }
+
+  let employee = getEmployeeByEmail(cleanEmail);
+
+  // Primeiro acesso: cria registro mínimo automaticamente
+  if (!employee) {
+    const now = new Date().toISOString();
+    employee = {
+      id:        randomUUID(),
+      name:      cleanEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, c => c.toUpperCase()),
+      email:     cleanEmail,
+      createdAt: now,
+      updatedAt: now,
+      completion: 0,
+    };
   }
 
   if (typeof password !== "string" || password.length < 8) {
