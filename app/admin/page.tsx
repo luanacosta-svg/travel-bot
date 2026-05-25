@@ -708,7 +708,7 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
           {inv.invoice.invoiceFile && (
             <div className="flex items-center gap-4 flex-wrap">
               <a
-                href={`/api/notas-fiscais/file/${inv.invoice.invoiceFile}`}
+                href={`/api/notas-fiscais/${inv.id}/file`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-2 rounded-xl transition"
