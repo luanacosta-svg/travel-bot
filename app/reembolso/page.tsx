@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import type { UserSession } from "@/types";
@@ -22,7 +22,7 @@ interface ExpenseItem {
 type DraftItem = Omit<ExpenseItem, "file">;
 
 function newItem(id: number): ExpenseItem {
-  return { id, description: "", category: "alimentação", date: "", amount: "", file: null, fileName: "" };
+  return { id, description: "", category: "Alimentação", date: "", amount: "", file: null, fileName: "" };
 }
 
 function saveDraft(items: ExpenseItem[]) {
@@ -50,13 +50,19 @@ export default function ReembolsoPage() {
   const [error, setError] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
 
+  // IA
+  const [aiDragOver, setAiDragOver]   = useState(false);
+  const [aiScanning, setAiScanning]   = useState(false);
+  const [aiProgress, setAiProgress]   = useState(0);
+  const [aiMessage,  setAiMessage]    = useState("");
+  const aiInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
     const draft = loadDraft();
     if (draft) setItems(draft);
   }, []);
 
-  // Auto-salva rascunho sempre que os itens mudam
   useEffect(() => {
     saveDraft(items);
     setDraftSaved(true);
@@ -79,6 +85,62 @@ export default function ReembolsoPage() {
 
   function clearDraft() {
     localStorage.removeItem(DRAFT_KEY);
+  }
+
+  // ── IA: analisa comprovantes e popula o form ──────────────────────
+  async function handleAiFiles(files: File[]) {
+    const valid = files.filter(f =>
+      f.type.startsWith("image/") || f.type === "application/pdf" || f.name.endsWith(".pdf")
+    ).slice(0, 20);
+    if (!valid.length) return;
+
+    setAiScanning(true);
+    setAiProgress(0);
+    setAiMessage(`Analisando ${valid.length} comprovante${valid.length > 1 ? "s" : ""}...`);
+
+    const newItems: ExpenseItem[] = [];
+    const BATCH = 5;
+
+    for (let i = 0; i < valid.length; i += BATCH) {
+      const batch = valid.slice(i, i + BATCH);
+      const fd = new FormData();
+      batch.forEach(f => fd.append("files", f));
+
+      try {
+        const res  = await fetch("/api/reembolso/scan", { method: "POST", body: fd });
+        const json = await res.json();
+        if (res.ok && json.results) {
+          json.results.forEach((r: { fileName: string; data: { descricao?: string; categoria?: string; data?: string; valor?: number; estabelecimento?: string } }, idx: number) => {
+            newItems.push({
+              id:          Date.now() + i + idx,
+              description: r.data.descricao  ?? r.fileName,
+              category:    r.data.categoria  ?? "Outros",
+              date:        r.data.data        ?? "",
+              amount:      r.data.valor != null ? String(r.data.valor) : "",
+              file:        batch[idx],
+              fileName:    batch[idx].name,
+            });
+          });
+        }
+      } catch {
+        batch.forEach((f, idx) => {
+          newItems.push({ id: Date.now() + i + idx, description: f.name, category: "Outros", date: "", amount: "", file: f, fileName: f.name });
+        });
+      }
+
+      setAiProgress(Math.round(((i + batch.length) / valid.length) * 100));
+    }
+
+    // Remove o item vazio inicial se ainda estiver lá
+    setItems(prev => {
+      const cleaned = prev.filter(it => it.description || it.amount || it.date);
+      return [...cleaned, ...newItems];
+    });
+
+    const total = newItems.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
+    setAiMessage(`✅ ${newItems.length} despesa${newItems.length > 1 ? "s" : ""} adicionada${newItems.length > 1 ? "s" : ""}${total > 0 ? ` · R$ ${total.toFixed(2).replace(".", ",")}` : ""} — revise e envie!`);
+    setAiScanning(false);
+    setTimeout(() => setAiMessage(""), 6000);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -113,39 +175,77 @@ export default function ReembolsoPage() {
       <Header user={user ?? undefined} title="Reembolso" />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* Banner IA */}
-        <a href="/reembolso/scan" className="flex items-center gap-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl px-5 py-4 mb-5 hover:from-orange-600 hover:to-orange-700 transition group">
-          <span className="text-2xl shrink-0">✨</span>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">Novo! Reembolso inteligente com IA</p>
-            <p className="text-xs text-orange-100 mt-0.5">Arraste os comprovantes e a IA preenche tudo automaticamente</p>
-          </div>
-          <span className="text-orange-200 group-hover:translate-x-1 transition-transform text-lg shrink-0">→</span>
-        </a>
-
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Solicitar reembolso</h1>
-            <p className="text-slate-500 text-sm mt-1">Adicione uma ou mais despesas de uma vez.</p>
+            <p className="text-slate-500 text-sm mt-1">Adicione as despesas manualmente ou arraste os comprovantes para a IA preencher.</p>
           </div>
           <div className="flex items-center gap-3 mt-1">
             {draftSaved && (
-              <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-full px-3 py-1 transition-all">
+              <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-full px-3 py-1">
                 ✓ Rascunho salvo
               </span>
             )}
             {items.some(i => i.description || i.amount || i.date) && (
-              <button
-                type="button"
-                onClick={() => { clearDraft(); setItems([newItem(Date.now())]); }}
-                className="text-xs text-slate-400 hover:text-red-500 transition"
-              >
-                ✕ Limpar rascunho
+              <button type="button" onClick={() => { clearDraft(); setItems([newItem(Date.now())]); }}
+                className="text-xs text-slate-400 hover:text-red-500 transition">
+                ✕ Limpar
               </button>
             )}
           </div>
         </div>
 
+        {/* ── Widget IA ── */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setAiDragOver(true); }}
+          onDragLeave={() => setAiDragOver(false)}
+          onDrop={(e) => { e.preventDefault(); setAiDragOver(false); handleAiFiles(Array.from(e.dataTransfer.files)); }}
+          onClick={() => !aiScanning && aiInputRef.current?.click()}
+          className={`relative mb-5 flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all select-none ${
+            aiScanning  ? "border-orange-300 bg-orange-50 cursor-default" :
+            aiDragOver  ? "border-orange-500 bg-orange-100 scale-[1.01]" :
+            aiMessage   ? "border-green-300 bg-green-50 cursor-default" :
+                          "border-slate-200 hover:border-orange-300 hover:bg-orange-50/60"
+          }`}
+        >
+          <input ref={aiInputRef} type="file" multiple accept="image/*,.pdf" className="hidden"
+            onChange={(e) => handleAiFiles(Array.from(e.target.files ?? []))} />
+
+          {/* Ícone */}
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+            aiScanning ? "bg-orange-100 animate-pulse" : aiMessage ? "bg-green-100" : "bg-orange-100"
+          }`}>
+            {aiScanning ? "🤖" : aiMessage ? "✅" : aiDragOver ? "📂" : "✨"}
+          </div>
+
+          {/* Texto */}
+          <div className="flex-1 min-w-0">
+            {aiScanning ? (
+              <>
+                <p className="text-sm font-semibold text-orange-700">{aiMessage}</p>
+                <div className="mt-1.5 h-1.5 bg-orange-100 rounded-full overflow-hidden w-48">
+                  <div className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                    style={{ width: `${aiProgress}%` }} />
+                </div>
+              </>
+            ) : aiMessage ? (
+              <p className="text-sm font-semibold text-green-700">{aiMessage}</p>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-slate-700">
+                  {aiDragOver ? "Solte para analisar com IA" : "Arraste comprovantes aqui — IA preenche automaticamente"}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">PDF, JPG ou PNG · até 20 arquivos</p>
+              </>
+            )}
+          </div>
+
+          {!aiScanning && !aiMessage && (
+            <span className="text-xs text-orange-500 font-semibold shrink-0 hidden sm:block">ou clique</span>
+          )}
+        </div>
+
+        {/* ── Formulário ── */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {items.map((item, index) => (
             <div key={item.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -162,100 +262,62 @@ export default function ReembolsoPage() {
               </div>
 
               <div className="px-5 pb-5 space-y-3">
-                {/* Descrição + upload lado a lado */}
                 <div className="flex gap-3 items-start">
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-slate-600 mb-1">Descrição *</label>
-                    <input
-                      required
-                      value={item.description}
+                    <input required value={item.description}
                       onChange={(e) => updateItem(item.id, { description: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="Ex: Almoço com cliente, Uber..."
-                    />
+                      placeholder="Ex: Almoço com cliente, Uber..." />
                   </div>
-
-                  {/* Upload comprovante */}
                   <div className="flex-shrink-0">
                     <label className="block text-xs font-medium text-slate-600 mb-1">Comprovante</label>
-                    <label className={`flex flex-col items-center justify-center w-20 h-[38px] border-2 border-dashed rounded-xl cursor-pointer transition text-center
+                    <label className={`flex items-center justify-center w-20 h-[38px] border-2 border-dashed rounded-xl cursor-pointer transition
                       ${item.fileName ? "border-orange-400 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-orange-50"}`}>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0] ?? null;
-                          updateItem(item.id, { file: f, fileName: f?.name ?? "" });
-                        }}
-                      />
-                      <span className="text-lg leading-none">{item.fileName ? "📎" : "📤"}</span>
+                      <input type="file" accept="image/*,.pdf" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0] ?? null; updateItem(item.id, { file: f, fileName: f?.name ?? "" }); }} />
+                      <span className="text-lg">{item.fileName ? "📎" : "📤"}</span>
                     </label>
-                    {item.fileName && (
-                      <p className="text-xs text-orange-600 mt-1 w-20 truncate">{item.fileName}</p>
-                    )}
+                    {item.fileName && <p className="text-xs text-orange-600 mt-1 w-20 truncate">{item.fileName}</p>}
                   </div>
                 </div>
 
-                {/* Categoria, Data, Valor */}
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Categoria *</label>
-                    <select
-                      required
-                      value={item.category}
+                    <select required value={item.category}
                       onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-                    >
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c.toLowerCase()}>{c}</option>
-                      ))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Data *</label>
-                    <input
-                      type="date"
-                      required
-                      value={item.date}
+                    <input type="date" required value={item.date}
                       onChange={(e) => updateItem(item.id, { date: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Valor (R$) *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      required
-                      value={item.amount}
+                    <input type="number" step="0.01" min="0.01" required value={item.amount}
                       onChange={(e) => updateItem(item.id, { amount: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="0,00"
-                    />
+                      placeholder="0,00" />
                   </div>
                 </div>
               </div>
             </div>
           ))}
 
-          {/* Botão adicionar */}
-          <button
-            type="button"
-            onClick={addItem}
-            className="w-full border-2 border-dashed border-slate-300 hover:border-orange-400 hover:bg-orange-50 text-slate-500 hover:text-orange-600 font-semibold py-3 rounded-2xl transition text-sm flex items-center justify-center gap-2"
-          >
+          <button type="button" onClick={addItem}
+            className="w-full border-2 border-dashed border-slate-300 hover:border-orange-400 hover:bg-orange-50 text-slate-500 hover:text-orange-600 font-semibold py-3 rounded-2xl transition text-sm flex items-center justify-center gap-2">
             <span className="text-lg">+</span> Adicionar outra despesa
           </button>
 
           {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3.5 rounded-xl transition text-sm"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3.5 rounded-xl transition text-sm">
             {loading ? "Enviando..." : `Enviar ${items.length > 1 ? `${items.length} despesas` : "solicitação"}`}
           </button>
         </form>
