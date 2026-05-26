@@ -24,9 +24,13 @@ export default function NotasFiscaisPage() {
 
     const formData = new FormData(e.currentTarget);
     const res = await fetch("/api/notas-fiscais/submit", { method: "POST", body: formData });
+    const data = await res.json().catch(() => ({}));
 
     setLoading(false);
-    if (!res.ok) { setError("Erro ao enviar. Tente novamente."); return; }
+    if (!res.ok) {
+      setError(data.error ?? "Erro ao enviar. Tente novamente.");
+      return;
+    }
     router.push("/minhas-solicitacoes?novo=1");
   }
 

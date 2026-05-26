@@ -23,6 +23,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["nodemailer", "amadeus"],
+  experimental: {
+    serverBodySizeLimit: "20mb",
+  },
   async headers() {
     return [
       {
