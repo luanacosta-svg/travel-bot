@@ -222,8 +222,8 @@ export default function PerfilPage() {
       setSavedAt(new Date());
       setToast("Cadastro atualizado com sucesso!");
       setTimeout(() => setToast(null), 3000);
-    } catch {
-      setToast("Erro ao salvar. Tente novamente.");
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Erro ao salvar. Tente novamente.");
       setTimeout(() => setToast(null), 3000);
     }
     setSaving(false);

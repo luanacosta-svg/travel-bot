@@ -137,7 +137,8 @@ export default function EditarColaboradorPage() {
         setToast({ msg: "Dados salvos com sucesso!", ok: true });
         setTimeout(() => router.push(`/admin/colaboradores/${id}`), 1500);
       } else {
-        setToast({ msg: "Erro ao salvar. Tente novamente.", ok: false });
+        const d = await res.json().catch(() => ({}));
+        setToast({ msg: d.error ?? "Erro ao salvar. Tente novamente.", ok: false });
       }
     } catch {
       setToast({ msg: "Erro de conexão.", ok: false });

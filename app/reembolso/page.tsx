@@ -98,11 +98,12 @@ export default function ReembolsoPage() {
       });
 
       const res = await fetch("/api/reembolso/submit", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Erro ao enviar");
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "Erro ao enviar");
       clearDraft();
       router.push("/minhas-solicitacoes?novo=1");
-    } catch {
-      setError("Erro ao enviar. Tente novamente.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao enviar. Tente novamente.");
       setLoading(false);
     }
   }

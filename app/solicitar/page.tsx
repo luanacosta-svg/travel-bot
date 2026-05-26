@@ -101,7 +101,7 @@ function SolicitarForm() {
     }
 
     setLoading(false);
-    if (!res.ok) { setError("Ocorreu um erro. Tente novamente."); return; }
+    if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error ?? "Ocorreu um erro. Tente novamente."); return; }
     router.push("/minhas-solicitacoes?novo=1");
   }
 
