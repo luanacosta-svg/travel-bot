@@ -29,7 +29,7 @@ export async function GET(
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": contentType,
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 }

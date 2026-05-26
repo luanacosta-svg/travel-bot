@@ -18,8 +18,9 @@ export async function PATCH(req: NextRequest) {
   const res = NextResponse.json({ success: true, user: updated });
   res.cookies.set("tb_user", newSession, {
     httpOnly: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 7, // 7 dias (igual ao login)
     path: "/",
   });
   return res;

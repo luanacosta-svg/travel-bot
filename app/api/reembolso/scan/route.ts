@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeSession } from "@/lib/session";
+import { detectMagicType } from "@/lib/validateFile";
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -10,11 +11,31 @@ function isValidImage(type: string): type is MediaType {
   return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(type);
 }
 
+// Rate limiting: 50 scans por usuário (por email) a cada hora
+const scanAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function isScanRateLimited(email: string): boolean {
+  const now = Date.now();
+  const entry = scanAttempts.get(email);
+  if (!entry || now > entry.resetAt) {
+    scanAttempts.set(email, { count: 1, resetAt: now + 60 * 60 * 1000 });
+    return false;
+  }
+  entry.count++;
+  return entry.count > 50;
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB por arquivo
+
 export async function POST(req: NextRequest) {
   const cookie = req.cookies.get("tb_user");
   if (!cookie) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const session = decodeSession(cookie.value);
   if (!session) return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
+
+  if (isScanRateLimited(session.email)) {
+    return NextResponse.json({ error: "Limite de scans atingido. Tente novamente em 1 hora." }, { status: 429 });
+  }
 
   try {
     const formData = await req.formData();
@@ -30,42 +51,36 @@ export async function POST(req: NextRequest) {
     const results = await Promise.all(
       files.map(async (file) => {
         try {
-          const buffer = Buffer.from(await file.arrayBuffer());
-          const base64 = buffer.toString("base64");
-          const mimeType = file.type || "image/jpeg";
+          // A3: valida tamanho e magic bytes antes de enviar para a API
+          if (file.size > MAX_FILE_SIZE) {
+            return { fileName: file.name, ok: false, data: { valor: null, data: null, descricao: file.name, estabelecimento: null, categoria: "Outro" } };
+          }
 
-          // PDF: envia como documento; imagem: envia como imagem
-          const isPdf = mimeType === "application/pdf" || file.name.endsWith(".pdf");
+          const detectedMime = await detectMagicType(file);
+          const isPdf = detectedMime === "application/pdf";
+          const isImage = detectedMime && isValidImage(detectedMime);
+
+          if (!isPdf && !isImage) {
+            return { fileName: file.name, ok: false, data: { valor: null, data: null, descricao: file.name, estabelecimento: null, categoria: "Outro" } };
+          }
+
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const base64  = buffer.toString("base64");
 
           const contentBlock = isPdf
-            ? {
-                type: "document" as const,
-                source: {
-                  type: "base64" as const,
-                  media_type: "application/pdf" as const,
-                  data: base64,
-                },
-              }
-            : {
-                type: "image" as const,
-                source: {
-                  type: "base64" as const,
-                  media_type: (isValidImage(mimeType) ? mimeType : "image/jpeg") as MediaType,
-                  data: base64,
-                },
-              };
+            ? { type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: base64 } }
+            : { type: "image"    as const, source: { type: "base64" as const, media_type: detectedMime as MediaType, data: base64 } };
 
           const response = await client.messages.create({
             model: "claude-opus-4-5",
             max_tokens: 512,
-            messages: [
-              {
-                role: "user",
-                content: [
-                  contentBlock,
-                  {
-                    type: "text",
-                    text: `Analise este comprovante/nota fiscal e extraia as informações em JSON com exatamente estas chaves:
+            messages: [{
+              role: "user",
+              content: [
+                contentBlock,
+                {
+                  type: "text",
+                  text: `Analise este comprovante/nota fiscal e extraia as informações em JSON com exatamente estas chaves:
 {
   "valor": número em reais (ex: 45.90),
   "data": string no formato YYYY-MM-DD,
@@ -75,10 +90,9 @@ export async function POST(req: NextRequest) {
 }
 
 Responda APENAS com o JSON, sem explicações. Se não conseguir ler algum campo, use null.`,
-                  },
-                ],
-              },
-            ],
+                },
+              ],
+            }],
           });
 
           const text = response.content[0].type === "text" ? response.content[0].text.trim() : "";
@@ -92,11 +106,7 @@ Responda APENAS com o JSON, sem explicações. Se não conseguir ler algum campo
           };
         } catch (err) {
           console.error(`Erro ao processar ${file.name}:`, err);
-          return {
-            fileName: file.name,
-            ok: false,
-            data: { valor: null, data: null, descricao: file.name, estabelecimento: null, categoria: "Outro" },
-          };
+          return { fileName: file.name, ok: false, data: { valor: null, data: null, descricao: file.name, estabelecimento: null, categoria: "Outro" } };
         }
       })
     );

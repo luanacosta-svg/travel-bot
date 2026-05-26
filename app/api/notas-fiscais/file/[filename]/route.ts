@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     status: 200,
     headers: {
       "Content-Type": contentType,
-      "Content-Disposition": `inline; filename="${safe}"`,
+      "Content-Disposition": `attachment; filename="${safe}"`,
       "Cache-Control": "private, max-age=3600",
     },
   });

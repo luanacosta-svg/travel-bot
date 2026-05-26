@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+// M2: unsafe-eval só permitido em desenvolvimento (Next.js HMR precisa disso).
+// Em produção removemos unsafe-eval. unsafe-inline ainda é necessário porque
+// Next.js 15 injeta scripts inline sem nonce por padrão — para remover
+// completamente precisaria de nonce-based CSP via middleware (próximo passo).
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  : "script-src 'self' 'unsafe-inline'";
+
 const securityHeaders = [
   { key: "Strict-Transport-Security",  value: "max-age=63072000; includeSubDomains; preload" },
   { key: "X-Frame-Options",            value: "DENY" },
@@ -10,7 +20,7 @@ const securityHeaders = [
     key:   "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",

@@ -10,5 +10,7 @@ data/invoices.json
 data/employees.json
 data/notifications.json
 data/uploads/
+data/allowed-emails.json
+data/audit.log
 .claude/
 tsconfig.tsbuildinfo
