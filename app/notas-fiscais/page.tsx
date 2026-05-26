@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import type { UserSession } from "@/types";
@@ -12,6 +12,8 @@ export default function NotasFiscaisPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
@@ -86,8 +88,31 @@ export default function NotasFiscaisPage() {
           {/* Upload NF */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Arquivo da nota fiscal *</h2>
-            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 cursor-pointer transition ${fileName ? "border-orange-400 bg-orange-50" : "border-slate-200 hover:border-orange-300 hover:bg-orange-50"}`}>
+            <div
+              className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition cursor-pointer ${
+                dragOver
+                  ? "border-orange-500 bg-orange-100 scale-[1.01]"
+                  : fileName
+                  ? "border-orange-400 bg-orange-50"
+                  : "border-slate-200 hover:border-orange-300 hover:bg-orange-50"
+              }`}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file && fileInputRef.current) {
+                  const dt = new DataTransfer();
+                  dt.items.add(file);
+                  fileInputRef.current.files = dt.files;
+                  setFileName(file.name);
+                }
+              }}
+            >
               <input
+                ref={fileInputRef}
                 name="invoiceFile"
                 type="file"
                 accept="image/*,.pdf,.xml"
@@ -97,18 +122,20 @@ export default function NotasFiscaisPage() {
               />
               {fileName ? (
                 <>
-                  <span className="text-2xl mb-2">📄</span>
-                  <p className="text-sm font-medium text-orange-600">{fileName}</p>
-                  <p className="text-xs text-slate-400 mt-1">Clique para trocar</p>
+                  <span className="text-3xl mb-2">📄</span>
+                  <p className="text-sm font-semibold text-orange-600">{fileName}</p>
+                  <p className="text-xs text-slate-400 mt-1">Clique ou arraste para trocar</p>
                 </>
               ) : (
                 <>
-                  <span className="text-2xl mb-2">📤</span>
-                  <p className="text-sm font-medium text-slate-600">Clique para anexar a NF</p>
+                  <span className="text-3xl mb-2">{dragOver ? "📂" : "📤"}</span>
+                  <p className="text-sm font-semibold text-slate-600">
+                    {dragOver ? "Solte o arquivo aqui" : "Arraste o arquivo ou clique para selecionar"}
+                  </p>
                   <p className="text-xs text-slate-400 mt-1">PDF, XML, JPG ou PNG · máx. 10MB</p>
                 </>
               )}
-            </label>
+            </div>
           </div>
 
           {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>}
