@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rateLimit";
 import { encodeAdminToken } from "@/lib/session";
 
-// Rate limiting em memória — 5 tentativas a cada 5 minutos por IP
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + 5 * 60 * 1000 });
-    return false;
-  }
-  entry.count++;
-  return entry.count > 5;
-}
 
 export async function POST(req: NextRequest) {
   const ip =
@@ -21,12 +9,8 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ??
     "unknown";
 
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Muitas tentativas. Aguarde 5 minutos." },
-      { status: 429 }
-    );
-  }
+  const rl = rateLimit("admin-login", ip, 5, 300);
+  if (!rl.allowed) return NextResponse.json({ error: "Muitas tentativas. Aguarde 5 minutos." }, { status: 429 });
 
   let body: unknown;
   try {

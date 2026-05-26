@@ -2,6 +2,23 @@ import fs from "fs";
 import path from "path";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import type { Employee, ContractStatus, ContractStatusKey } from "@/types";
+import { encrypt, decrypt, ENCRYPTED_EMPLOYEE_FIELDS } from "@/lib/encryption";
+
+function encryptEmployee(emp: Employee): Employee {
+  const out = { ...emp };
+  for (const f of ENCRYPTED_EMPLOYEE_FIELDS) {
+    if (out[f]) out[f] = encrypt(out[f]) as string;
+  }
+  return out;
+}
+
+function decryptEmployee(emp: Employee): Employee {
+  const out = { ...emp };
+  for (const f of ENCRYPTED_EMPLOYEE_FIELDS) {
+    if (out[f]) out[f] = decrypt(out[f]) as string;
+  }
+  return out;
+}
 
 // ─── Password helpers ─────────────────────────────────────────────
 
@@ -30,28 +47,35 @@ function ensureFile() {
   if (!fs.existsSync(FILE)) fs.writeFileSync(FILE, "[]", "utf-8");
 }
 
-export function getAllEmployees(): Employee[] {
+function readAll(): Employee[] {
   ensureFile();
-  return JSON.parse(fs.readFileSync(FILE, "utf-8"));
+  const raw: Employee[] = JSON.parse(fs.readFileSync(FILE, "utf-8"));
+  return raw.map(decryptEmployee);
+}
+
+export function getAllEmployees(): Employee[] {
+  return readAll();
 }
 
 export function getEmployee(id: string): Employee | undefined {
-  return getAllEmployees().find((e) => e.id === id);
+  return readAll().find((e) => e.id === id);
 }
 
 export function getEmployeeByEmail(email: string): Employee | undefined {
-  return getAllEmployees().find((e) => e.email.toLowerCase() === email.toLowerCase());
+  return readAll().find((e) => e.email.toLowerCase() === email.toLowerCase());
 }
 
 export function saveEmployee(emp: Employee): void {
   ensureFile();
-  const all = getAllEmployees();
+  const all = readAll();
   const idx = all.findIndex((e) => e.id === emp.id);
   const now = new Date().toISOString();
   const enriched = { ...emp, updatedAt: now, completion: calcCompletion(emp) };
   if (idx >= 0) all[idx] = enriched;
   else all.unshift({ ...enriched, createdAt: enriched.createdAt ?? now });
-  fs.writeFileSync(FILE, JSON.stringify(all, null, 2), "utf-8");
+  // Criptografa campos sensíveis antes de escrever em disco
+  const encrypted = all.map(encryptEmployee);
+  fs.writeFileSync(FILE, JSON.stringify(encrypted, null, 2), "utf-8");
 }
 
 export function deleteEmployee(id: string): void {

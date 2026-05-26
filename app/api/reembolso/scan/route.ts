@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rateLimit";
 import { decodeSession } from "@/lib/session";
 import { detectMagicType } from "@/lib/validateFile";
 import Anthropic from "@anthropic-ai/sdk";
@@ -11,20 +12,6 @@ function isValidImage(type: string): type is MediaType {
   return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(type);
 }
 
-// Rate limiting: 50 scans por usuário (por email) a cada hora
-const scanAttempts = new Map<string, { count: number; resetAt: number }>();
-
-function isScanRateLimited(email: string): boolean {
-  const now = Date.now();
-  const entry = scanAttempts.get(email);
-  if (!entry || now > entry.resetAt) {
-    scanAttempts.set(email, { count: 1, resetAt: now + 60 * 60 * 1000 });
-    return false;
-  }
-  entry.count++;
-  return entry.count > 50;
-}
-
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB por arquivo
 
 export async function POST(req: NextRequest) {
@@ -33,9 +20,8 @@ export async function POST(req: NextRequest) {
   const session = decodeSession(cookie.value);
   if (!session) return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
 
-  if (isScanRateLimited(session.email)) {
-    return NextResponse.json({ error: "Limite de scans atingido. Tente novamente em 1 hora." }, { status: 429 });
-  }
+  const rl = rateLimit("scan", session.email, 50, 3600);
+  if (!rl.allowed) return NextResponse.json({ error: "Limite de scans atingido. Tente novamente em 1 hora." }, { status: 429 });
 
   try {
     const formData = await req.formData();

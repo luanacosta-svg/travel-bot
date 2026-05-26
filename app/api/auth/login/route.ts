@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rateLimit";
 import { encodeSession } from "@/lib/session";
 import { getEmployeeByEmail, saveEmployee, hashPassword, verifyPassword } from "@/lib/employeeStore";
 import { ALLOWED_EMAILS } from "@/lib/allowedEmails";
 import { randomUUID } from "crypto";
 
-// Rate limiting: 10 tentativas por IP a cada 5 minutos
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = loginAttempts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + 5 * 60 * 1000 });
-    return false;
-  }
-  entry.count++;
-  return entry.count > 10;
-}
-
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("cf-connecting-ip") ??
              req.headers.get("x-real-ip") ?? "unknown";
-  if (isRateLimited(ip)) {
-    return NextResponse.json({ error: "Muitas tentativas. Aguarde 5 minutos." }, { status: 429 });
-  }
+  const rl = rateLimit("login", ip, 10, 300);
+  if (!rl.allowed) return NextResponse.json({ error: "Muitas tentativas. Aguarde 5 minutos." }, { status: 429 });
   let body: unknown;
   try {
     body = await req.json();

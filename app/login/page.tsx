@@ -56,7 +56,6 @@ function LoginForm() {
   const [checkingEmail,   setCheckingEmail]   = useState(false);
 
   // ── Admin ──
-  const [adminEmail,    setAdminEmail]    = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
   const [loading,     setLoading]     = useState(false);
@@ -401,13 +400,6 @@ function LoginForm() {
           {/* ── ADMIN FLOW ── */}
           {mode === "admin" && (
             <form onSubmit={handleAdminSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-slate-700">E-mail administrativo</label>
-                <p className="text-xs text-slate-400">Use o domínio @49educacao.com.br</p>
-                <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="nome@49educacao.com.br"
-                  className={inputCls(false)} />
-              </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-slate-700">Senha de administrador</label>
                 <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)}
