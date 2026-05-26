@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import fs from "fs";
 import { getInvoice } from "@/lib/invoiceStore";
 import { getFilePath, fileExists } from "@/lib/fileUpload";
@@ -16,7 +17,7 @@ function formatDateBR(iso: string) {
 }
 
 export async function GET(req: NextRequest, { params }: Ctx) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!isAdminRequest(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const { id } = await params;
   const inv = getInvoice(id);

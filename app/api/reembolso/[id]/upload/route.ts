@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getReimbursement, saveReimbursement } from "@/lib/reimbursementStore";
 import { saveUploadedFile } from "@/lib/fileUpload";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Ctx) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!isAdminRequest(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const { id } = await params;
   const item = getReimbursement(id);

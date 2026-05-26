@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getEmployee } from "@/lib/employeeStore";
 import nodemailer from "nodemailer";
 
@@ -35,7 +36,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdmin(req)) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

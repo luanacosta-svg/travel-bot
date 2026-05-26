@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getAllReimbursements } from "@/lib/reimbursementStore";
 import { getFilePath, fileExists } from "@/lib/fileUpload";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
@@ -7,7 +8,7 @@ import fs from "fs";
 type Ctx = { params: Promise<{ batchId: string }> };
 
 export async function GET(req: NextRequest, { params }: Ctx) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!isAdminRequest(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const { batchId } = await params;
   const all = getAllReimbursements();

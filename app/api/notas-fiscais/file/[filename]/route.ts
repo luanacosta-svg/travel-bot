@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { decodeSession } from "@/lib/session";
 import { getFilePath, fileExists } from "@/lib/fileUpload";
 import fs from "fs";
@@ -9,7 +10,7 @@ type Ctx = { params: Promise<{ filename: string }> };
 export async function GET(req: NextRequest, { params }: Ctx) {
   const userCookie = req.cookies.get("tb_user");
   const user = userCookie ? decodeSession(userCookie.value) : null;
-  const admin = isAdmin(req);
+  const admin = isAdminRequest(req);
 
   if (!admin && !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

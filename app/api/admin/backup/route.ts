@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getAllRequests } from "@/lib/store";
 import { getAllReimbursements } from "@/lib/reimbursementStore";
 import { getAllInvoices } from "@/lib/invoiceStore";
@@ -6,7 +7,7 @@ import fs from "fs";
 import path from "path";
 
 export async function GET(req: NextRequest) {
-  if (!isAdmin(req)) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 

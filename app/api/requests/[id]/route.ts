@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getRequest, saveRequest, deleteRequest } from "@/lib/store";
 import { decodeSession } from "@/lib/session";
 import { createNotification } from "@/lib/notificationStore";
@@ -6,7 +7,7 @@ import { createNotification } from "@/lib/notificationStore";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Ctx) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!isAdminRequest(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const { id } = await params;
   const request = getRequest(id);
   if (!request) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
   const userCookie = req.cookies.get("tb_user");
   const session = userCookie ? decodeSession(userCookie.value) : null;
-  const admin = isAdmin(req);
+  const admin = isAdminRequest(req);
 
   if (!admin && (!session || session.email !== item.requester.email)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -63,7 +64,7 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
 
   const userCookie = req.cookies.get("tb_user");
   const session = userCookie ? decodeSession(userCookie.value) : null;
-  const admin = isAdmin(req);
+  const admin = isAdminRequest(req);
 
   if (!admin && (!session || session.email !== item.requester.email)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
