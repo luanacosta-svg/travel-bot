@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import ContractMeter from "@/components/ContractMeter";
 import type { Employee } from "@/types";
+import { maskCNPJ, maskPIX } from "@/lib/maskPii";
 
 const SQUADS = [
   "Design", "Tecnologia", "Produto", "Marketing", "Financeiro",
@@ -49,7 +50,7 @@ function exportCSV(employees: Employee[]) {
   const rows = employees.map((e) => [
     e.name, e.email, e.role ?? "", e.squad ?? "", e.city ?? "",
     e.contractStart ?? "", e.contractEnd ?? "", String(e.completion ?? 0),
-    e.cnpj ?? "", e.pixCnpj ?? "", e.pixPf ?? "",
+    maskCNPJ(e.cnpj), maskPIX(e.pixCnpj), maskPIX(e.pixPf),
   ]);
   const csv = [headers, ...rows]
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))

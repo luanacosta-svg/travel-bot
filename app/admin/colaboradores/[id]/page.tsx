@@ -1,10 +1,12 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import ContractMeter from "@/components/ContractMeter";
 import type { Employee } from "@/types";
+import { maskCPF, maskPIX, maskCNPJ } from "@/lib/maskPii";
 
 // ── Lembrete modal ────────────────────────────────────────────────────────────
 function LembreteModal({
@@ -119,6 +121,51 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+function MaskedRow({
+  label, value, masked, fieldKey, empId, onReveal,
+}: {
+  label: string;
+  value?: string | null;
+  masked: string;
+  fieldKey: string;
+  empId: string;
+  onReveal: (key: string) => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  async function handleReveal() {
+    setRevealed(true);
+    onReveal(fieldKey);
+    // Loga o reveal no audit
+    await fetch("/api/admin/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "pii_reveal", target: empId, detail: `${label} revelado` }),
+    });
+  }
+
+  if (!value) return <InfoRow label={label} value={null} />;
+
+  return (
+    <div className="flex justify-between py-3 border-b border-slate-50 gap-4 last:border-0 items-center">
+      <span className="text-sm text-slate-400 flex-shrink-0">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-slate-800 font-mono">
+          {revealed ? value : masked}
+        </span>
+        {!revealed && (
+          <button
+            onClick={handleReveal}
+            className="text-xs text-orange-500 hover:text-orange-700 font-semibold transition underline underline-offset-2"
+          >
+            Revelar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ColaboradorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [emp,          setEmp]          = useState<Employee | null>(null);
@@ -127,6 +174,9 @@ export default function ColaboradorDetailPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting,        setResetting]        = useState(false);
   const [toast,            setToast]            = useState<{ msg: string; ok: boolean } | null>(null);
+  // Campos sensíveis revelados (apenas para controle local de UI — o audit já foi enviado)
+  const [_revealed, setRevealed] = useState<Set<string>>(new Set());
+  function onReveal(key: string) { setRevealed(prev => new Set([...prev, key])); }
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -331,7 +381,7 @@ export default function ColaboradorDetailPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-5">
               <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider mb-3">Dados pessoais</h3>
               <InfoRow label="Nome completo"     value={emp.name} />
-              <InfoRow label="CPF"               value={emp.cpf} />
+              <MaskedRow label="CPF" value={emp.cpf} masked={maskCPF(emp.cpf)} fieldKey="cpf" empId={String(id)} onReveal={onReveal} />
               <InfoRow label="Data de nascimento" value={formatBR(emp.birthDate)} />
               <InfoRow label="E-mail pessoal"    value={emp.personalEmail} />
               <InfoRow label="Telefone"          value={emp.phone} />
@@ -357,9 +407,9 @@ export default function ColaboradorDetailPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-5">
               <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider mb-3">Dados PJ & PIX</h3>
               <InfoRow label="Razão social" value={emp.razaoSocial} />
-              <InfoRow label="CNPJ"         value={emp.cnpj} />
-              <InfoRow label="PIX (CNPJ)"   value={emp.pixCnpj} />
-              <InfoRow label="PIX (PF)"     value={emp.pixPf} />
+              <MaskedRow label="CNPJ"     value={emp.cnpj}    masked={maskCNPJ(emp.cnpj)}    fieldKey="cnpj"    empId={String(id)} onReveal={onReveal} />
+              <MaskedRow label="PIX (CNPJ)" value={emp.pixCnpj} masked={maskPIX(emp.pixCnpj)} fieldKey="pixCnpj" empId={String(id)} onReveal={onReveal} />
+              <MaskedRow label="PIX (PF)"   value={emp.pixPf}   masked={maskPIX(emp.pixPf)}   fieldKey="pixPf"   empId={String(id)} onReveal={onReveal} />
             </div>
           </div>
 

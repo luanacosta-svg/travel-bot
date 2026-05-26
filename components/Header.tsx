@@ -52,6 +52,7 @@ export default function Header({ user, isAdmin, title }: HeaderProps) {
     { href: "/admin",                    label: "Solicitações" },
     { href: "/admin/colaboradores",      label: "Colaboradores" },
     { href: "/admin/contratos",          label: "Contratos" },
+    { href: "/admin/auditoria",          label: "Auditoria" },
   ];
 
   const navLinks = isAdmin ? adminNavLinks : userNavLinks;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeSession } from "@/lib/session";
 import { getEmployee, saveEmployee, deleteEmployee, calcCompletion } from "@/lib/employeeStore";
+import { logAudit } from "@/lib/auditLog";
 
 function getAuth(req: NextRequest) {
   const adminCookie = req.cookies.get("tb_admin");
@@ -19,6 +20,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const emp = getEmployee(id);
   if (!emp) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Audit: loga quando admin acessa dados pessoais de colaborador
+  if (isAdmin) {
+    const ip = req.headers.get("cf-connecting-ip") ??
+               req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+    logAudit({ action: "pii_view", actor: "admin", target: id, detail: emp.name, ip });
+  }
+
   return NextResponse.json(emp);
 }
 
