@@ -22,7 +22,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["nodemailer", "amadeus"],
+  serverExternalPackages: ["nodemailer", "amadeus", "@anthropic-ai/sdk"],
   async headers() {
     return [
       {

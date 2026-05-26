@@ -113,6 +113,16 @@ export default function ReembolsoPage() {
       <Header user={user ?? undefined} title="Reembolso" />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
+        {/* Banner IA */}
+        <a href="/reembolso/scan" className="flex items-center gap-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl px-5 py-4 mb-5 hover:from-orange-600 hover:to-orange-700 transition group">
+          <span className="text-2xl shrink-0">✨</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">Novo! Reembolso inteligente com IA</p>
+            <p className="text-xs text-orange-100 mt-0.5">Arraste os comprovantes e a IA preenche tudo automaticamente</p>
+          </div>
+          <span className="text-orange-200 group-hover:translate-x-1 transition-transform text-lg shrink-0">→</span>
+        </a>
+
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Solicitar reembolso</h1>
