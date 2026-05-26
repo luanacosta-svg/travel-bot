@@ -123,12 +123,31 @@ export default function ColaboradorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [emp,          setEmp]          = useState<Employee | null>(null);
   const [loading,      setLoading]      = useState(true);
-  const [showLembrete, setShowLembrete] = useState(false);
-  const [toast,        setToast]        = useState<{ msg: string; ok: boolean } | null>(null);
+  const [showLembrete,    setShowLembrete]    = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting,        setResetting]        = useState(false);
+  const [toast,            setToast]            = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 4000);
+  }
+
+  async function resetPassword() {
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/employees/${id}/reset-password`, { method: "POST" });
+      if (res.ok) {
+        showToast("Senha resetada. No próximo login o colaborador criará uma nova.", true);
+      } else {
+        showToast("Erro ao resetar senha.", false);
+      }
+    } catch {
+      showToast("Erro de conexão.", false);
+    } finally {
+      setResetting(false);
+      setShowResetConfirm(false);
+    }
   }
 
   async function sendLembrete(type: "cadastro" | "contrato") {
@@ -236,12 +255,18 @@ export default function ColaboradorDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex gap-2 flex-shrink-0 flex-wrap">
               <button
                 onClick={() => setShowLembrete(true)}
                 className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-orange-300 hover:text-orange-600 transition"
               >
                 ✉️ Enviar lembrete
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-red-300 hover:text-red-600 transition"
+              >
+                🔑 Resetar senha
               </button>
               <a
                 href={`/admin/colaboradores/${id}/editar`}
@@ -250,6 +275,34 @@ export default function ColaboradorDetailPage() {
                 ✏️ Editar
               </a>
             </div>
+
+            {/* Modal confirmação reset */}
+            {showResetConfirm && emp && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+                  <h2 className="font-extrabold text-slate-900 text-lg">Resetar senha</h2>
+                  <p className="text-sm text-slate-600">
+                    Tem certeza que quer resetar a senha de <strong>{emp.name}</strong>?
+                    No próximo acesso ele precisará criar uma nova senha.
+                  </p>
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      onClick={() => setShowResetConfirm(false)}
+                      className="flex-1 text-sm font-semibold border border-slate-200 text-slate-600 py-2.5 rounded-xl hover:border-slate-300 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={resetPassword}
+                      disabled={resetting}
+                      className="flex-1 text-sm font-bold bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-xl transition"
+                    >
+                      {resetting ? "Resetando…" : "Sim, resetar"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
