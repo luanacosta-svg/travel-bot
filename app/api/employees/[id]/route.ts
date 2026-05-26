@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id: _id, email: _email, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
     rawBody as Record<string, unknown>;
 
-  const updated = { ...emp, ...safeBody, id, email: emp.email, updatedAt: new Date().toISOString() };
+  const updated = { ...emp, ...(safeBody as Partial<typeof emp>), id, email: emp.email, updatedAt: new Date().toISOString() } as typeof emp;
   updated.completion = calcCompletion(updated);
   saveEmployee(updated);
   return NextResponse.json(updated);

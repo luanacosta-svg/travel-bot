@@ -38,15 +38,15 @@ export async function POST(req: NextRequest) {
   const { id: _id, email: _e, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
     rawBody as Record<string, unknown>;
 
-  const emp: Employee = {
+  const emp = {
     ...existing,
-    ...safeBody,
+    ...(safeBody as Partial<Employee>),
     id: existing?.id ?? randomUUID(),
     email,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     completion: 0,
-  };
+  } as Employee;
   emp.completion = calcCompletion(emp);
   saveEmployee(emp);
   return NextResponse.json(emp);
