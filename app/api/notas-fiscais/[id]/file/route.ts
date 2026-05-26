@@ -5,11 +5,6 @@ import { getFilePath, fileExists } from "@/lib/fileUpload";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-function isAdmin(req: NextRequest) {
-  const c = req.cookies.get("tb_admin");
-  return c && c.value === process.env.ADMIN_SECRET;
-}
-
 function sanitize(str: string) {
   return str.replace(/[/\\?%*:|"<>]/g, "").trim();
 }

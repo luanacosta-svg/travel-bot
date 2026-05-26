@@ -6,11 +6,6 @@ import path from "path";
 
 type Ctx = { params: Promise<{ filename: string }> };
 
-function isAdmin(req: NextRequest) {
-  const c = req.cookies.get("tb_admin");
-  return c && c.value === process.env.ADMIN_SECRET;
-}
-
 export async function GET(req: NextRequest, { params }: Ctx) {
   const userCookie = req.cookies.get("tb_user");
   const user = userCookie ? decodeSession(userCookie.value) : null;

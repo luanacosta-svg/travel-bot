@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { decodeSession } from "@/lib/session";
 import { getAllEmployees, saveEmployee, getEmployeeByEmail, calcCompletion } from "@/lib/employeeStore";
 import type { Employee } from "@/types";
 import { randomUUID } from "crypto";
 
 function getAuth(req: NextRequest) {
-  const adminCookie = req.cookies.get("tb_admin");
-  const isAdmin = !!adminCookie?.value;
+  const isAdmin = isAdminRequest(req);
   const userCookie = req.cookies.get("tb_user");
   const user = userCookie ? decodeSession(userCookie.value) : null;
   return { isAdmin, user };
@@ -28,14 +28,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const rawBody = await req.json();
   const now = new Date().toISOString();
-  const email = isAdmin ? body.email : user!.email;
+  const email = isAdmin ? rawBody.email : user!.email;
   const existing = getEmployeeByEmail(email);
+
+  // A4: strip campos protegidos para evitar mass assignment
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _id, email: _e, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
+    rawBody as Record<string, unknown>;
 
   const emp: Employee = {
     ...existing,
-    ...body,
+    ...safeBody,
     id: existing?.id ?? randomUUID(),
     email,
     createdAt: existing?.createdAt ?? now,

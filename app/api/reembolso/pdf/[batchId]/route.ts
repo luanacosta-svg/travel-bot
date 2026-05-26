@@ -6,11 +6,6 @@ import fs from "fs";
 
 type Ctx = { params: Promise<{ batchId: string }> };
 
-function isAdmin(req: NextRequest) {
-  const c = req.cookies.get("tb_admin");
-  return c && c.value === process.env.ADMIN_SECRET;
-}
-
 export async function GET(req: NextRequest, { params }: Ctx) {
   if (!isAdmin(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 

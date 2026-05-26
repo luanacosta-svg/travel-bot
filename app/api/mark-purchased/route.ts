@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getRequest, saveRequest } from "@/lib/store";
 import { saveUploadedFile } from "@/lib/fileUpload";
 import { sendPurchaseConfirmation } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
-  const adminCookie = req.cookies.get("tb_admin");
-  if (!adminCookie || adminCookie.value !== process.env.ADMIN_SECRET) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 

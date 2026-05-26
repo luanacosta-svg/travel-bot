@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { logAudit, readAuditLog } from "@/lib/auditLog";
 
 function getAdminId(req: NextRequest): string | null {
-  const cookie = req.cookies.get("tb_admin");
-  return cookie ? "admin" : null;
+  return isAdminRequest(req) ? "admin" : null;
 }
 
 // GET /api/admin/audit — lista entradas do log (admin only)

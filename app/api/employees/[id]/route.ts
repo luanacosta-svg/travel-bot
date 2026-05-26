@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { decodeSession } from "@/lib/session";
 import { getEmployee, saveEmployee, deleteEmployee, calcCompletion } from "@/lib/employeeStore";
 import { logAudit } from "@/lib/auditLog";
 
 function getAuth(req: NextRequest) {
-  const adminCookie = req.cookies.get("tb_admin");
-  const isAdmin = !!adminCookie?.value;
+  const isAdmin = isAdminRequest(req);
   const userCookie = req.cookies.get("tb_user");
   const user = userCookie ? decodeSession(userCookie.value) : null;
   return { isAdmin, user };
@@ -20,6 +20,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const emp = getEmployee(id);
   if (!emp) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // A2: usuário só pode ver o próprio perfil
+  if (!isAdmin && emp.email !== user?.email) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Audit: loga quando admin acessa dados pessoais de colaborador
   if (isAdmin) {
@@ -41,8 +46,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const emp = getEmployee(id);
   if (!emp) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json();
-  const updated = { ...emp, ...body, id, updatedAt: new Date().toISOString() };
+  // A2: usuário só pode editar o próprio perfil
+  if (!isAdmin && emp.email !== user?.email) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const rawBody = await req.json();
+
+  // A4: campos protegidos não podem ser sobrescritos via API
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _id, email: _email, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
+    rawBody as Record<string, unknown>;
+
+  const updated = { ...emp, ...safeBody, id, email: emp.email, updatedAt: new Date().toISOString() };
   updated.completion = calcCompletion(updated);
   saveEmployee(updated);
   return NextResponse.json(updated);

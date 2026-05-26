@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { encodeAdminToken } from "@/lib/session";
 
 // Rate limiting em memória — 5 tentativas a cada 5 minutos por IP
 const attempts = new Map<string, { count: number; resetAt: number }>();
@@ -48,12 +49,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
   }
 
+  const token = encodeAdminToken();
   const res = NextResponse.json({ success: true });
-  res.cookies.set("tb_admin", process.env.ADMIN_SECRET!, {
+  res.cookies.set("tb_admin", token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge:   60 * 60 * 8, // 8h (era 7 dias)
+    maxAge:   60 * 60 * 8, // 8h
     path:     "/",
   });
   return res;

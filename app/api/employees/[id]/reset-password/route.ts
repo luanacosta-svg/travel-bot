@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import { getEmployee, saveEmployee } from "@/lib/employeeStore";
 import { logAudit } from "@/lib/auditLog";
 
-function isAdmin(req: NextRequest) {
-  const c = req.cookies.get("tb_admin");
-  return c && c.value === process.env.ADMIN_SECRET;
-}
-
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAdmin(req)) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 

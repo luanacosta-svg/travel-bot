@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEmployee } from "@/lib/employeeStore";
 import nodemailer from "nodemailer";
 
-function isAdmin(req: NextRequest) {
-  const c = req.cookies.get("tb_admin");
-  return c && c.value === process.env.ADMIN_SECRET;
-}
-
 function baseTemplate(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">

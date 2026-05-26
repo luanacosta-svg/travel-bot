@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/adminAuth";
 import fs from "fs";
 import { getFilePath, fileExists } from "@/lib/fileUpload";
 
@@ -6,8 +7,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
-  const adminCookie = req.cookies.get("tb_admin");
-  if (!adminCookie || adminCookie.value !== process.env.ADMIN_SECRET) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
