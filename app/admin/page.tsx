@@ -590,12 +590,34 @@ export default function AdminPage() {
               return (
                 <MonthSection key={group.key} label={group.label} count={group.items.length} total={monthTotal} defaultOpen={gi === 0}>
                   {/* Lotes */}
-                  {Array.from(batchMap.entries()).map(([batchId, items]) => (
+                  {Array.from(batchMap.entries()).map(([batchId, items]) => {
+                    const batchSelectable = items.filter(r => r.status !== "paid");
+                    const batchAllSelected = batchSelectable.length > 0 && batchSelectable.every(r => selectedIds.has(r.id));
+                    function toggleBatch() {
+                      setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        if (batchAllSelected) batchSelectable.forEach(r => next.delete(r.id));
+                        else batchSelectable.forEach(r => next.add(r.id));
+                        return next;
+                      });
+                    }
+                    return (
                     <div key={batchId} className="border-b border-slate-100 last:border-0">
-                      <div className="px-5 py-2.5 bg-blue-50 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Lote · {items.length} despesas</span>
-                          <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
+                      <div className="px-5 py-2.5 bg-blue-50 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {batchSelectable.length > 0 && (
+                            <input
+                              type="checkbox"
+                              checked={batchAllSelected}
+                              onChange={toggleBatch}
+                              title="Selecionar lote"
+                              className="w-4 h-4 rounded accent-orange-500 cursor-pointer flex-shrink-0"
+                            />
+                          )}
+                          <div>
+                            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Lote · {items.length} despesas</span>
+                            <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
+                          </div>
                         </div>
                         <a href={`/api/reembolso/pdf/${batchId}`} target="_blank" rel="noopener noreferrer"
                           className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-white rounded-lg px-3 py-1 transition hover:bg-blue-50">
@@ -609,7 +631,8 @@ export default function AdminPage() {
                         ))}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {/* Individuais */}
                   {singles.map((req) => (
                     <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested
