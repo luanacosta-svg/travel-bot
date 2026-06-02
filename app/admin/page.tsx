@@ -80,11 +80,97 @@ function MonthSection({ label, count, total, defaultOpen, children }: {
 
 function exportCSV(rows: string[][], filename: string) {
   const content = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["﻿" + content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── Barra de ações em lote ────────────────────────────────────────────────
+function BulkActionBar({
+  count, total, dueDate, onDueDateChange,
+  onAction, saving, onClear,
+  hasPending, hasApproved, hasReceived, type,
+}: {
+  count: number; total: number; dueDate: string;
+  onDueDateChange: (v: string) => void;
+  onAction: (status: string) => void;
+  saving: boolean; onClear: () => void;
+  hasPending: boolean; hasApproved: boolean; hasReceived: boolean;
+  type: "reimbursements" | "invoices";
+}) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-orange-200 shadow-xl px-4 py-3">
+      <div className="max-w-5xl mx-auto flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{count}</span>
+          <span className="text-sm font-semibold text-slate-700">selecionado{count !== 1 ? "s" : ""}</span>
+          <span className="text-sm text-slate-400">·</span>
+          <span className="text-sm font-bold text-slate-800">{formatCurrency(total)}</span>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+          <span className="text-xs text-slate-500 whitespace-nowrap">📅 Previsão:</span>
+          <input
+            type="date" value={dueDate}
+            onChange={e => onDueDateChange(e.target.value)}
+            className="border-0 bg-transparent text-sm focus:outline-none text-slate-700"
+          />
+        </div>
+
+        <div className="flex gap-2 ml-auto flex-wrap">
+          {type === "reimbursements" ? (
+            <>
+              {hasPending && (
+                <button onClick={() => onAction("approved")} disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "✓"} Aprovar
+                </button>
+              )}
+              {hasPending && (
+                <button onClick={() => onAction("rejected")} disabled={saving}
+                  className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "✗"} Recusar
+                </button>
+              )}
+              {hasApproved && (
+                <button onClick={() => onAction("paid")} disabled={saving}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "💸"} Marcar pago
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {hasPending && (
+                <button onClick={() => onAction("received")} disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "✓"} Confirmar recebimento
+                </button>
+              )}
+              {hasPending && (
+                <button onClick={() => onAction("rejected")} disabled={saving}
+                  className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "✗"} Recusar
+                </button>
+              )}
+              {hasReceived && (
+                <button onClick={() => onAction("paid")} disabled={saving}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                  {saving ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> : "💰"} Marcar pago
+                </button>
+              )}
+            </>
+          )}
+          <button onClick={onClear}
+            className="text-sm text-slate-400 hover:text-slate-600 border border-slate-200 rounded-xl px-3 py-2 transition">
+            ✕ Limpar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminPage() {
@@ -98,6 +184,11 @@ export default function AdminPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState<SortKey>("date_desc");
+
+  // ── Seleção em lote ──
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDueDate, setBulkDueDate] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     const [t, r, i] = await Promise.all([
@@ -117,8 +208,8 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  // Reset pay filter when switching tabs
-  useEffect(() => { setPayFilter("all"); }, [tab]);
+  // Limpa seleção ao mudar aba
+  useEffect(() => { setPayFilter("all"); setSelectedIds(new Set()); }, [tab]);
 
   function matchesFilter(name: string, email: string, createdAt: string) {
     const q = search.toLowerCase();
@@ -142,6 +233,7 @@ export default function AdminPage() {
 
   const filteredTravels = useMemo(
     () => applySort(travels.filter((r) => matchesFilter(r.requester.name, r.requester.email, r.createdAt))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [travels, search, dateFrom, dateTo, sort]
   );
 
@@ -150,6 +242,7 @@ export default function AdminPage() {
     if (payFilter === "topay") items = items.filter((r) => r.status === "approved");
     if (payFilter === "paid")  items = items.filter((r) => r.status === "paid");
     return applySort(items, (r) => r.expense.amount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reimbursements, search, dateFrom, dateTo, payFilter, sort]);
 
   const filteredInv = useMemo(() => {
@@ -157,6 +250,7 @@ export default function AdminPage() {
     if (payFilter === "topay") items = items.filter((i) => i.status === "received");
     if (payFilter === "paid")  items = items.filter((i) => i.status === "paid");
     return applySort(items, (i) => i.invoice.amount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoices, search, dateFrom, dateTo, payFilter, sort]);
 
   const reimbTotal = filteredReimb.reduce((s, r) => s + r.expense.amount, 0);
@@ -164,6 +258,69 @@ export default function AdminPage() {
 
   const toPayReimb = reimbursements.filter((r) => r.status === "approved").length;
   const toPayInv   = invoices.filter((i) => i.status === "received").length;
+
+  // ── Helpers de seleção ──
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    if (tab === "reimbursements") {
+      const selectable = filteredReimb.filter(r => r.status !== "paid").map(r => r.id);
+      setSelectedIds(new Set(selectable));
+    } else if (tab === "invoices") {
+      const selectable = filteredInv.filter(i => i.status !== "paid").map(i => i.id);
+      setSelectedIds(new Set(selectable));
+    }
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setBulkDueDate("");
+  }
+
+  async function handleBulkAction(status: string) {
+    setBulkSaving(true);
+    if (tab === "reimbursements") {
+      const items = filteredReimb.filter(r => selectedIds.has(r.id));
+      await Promise.all(items.map(r =>
+        fetch(`/api/reembolso/${r.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, ...(bulkDueDate ? { paymentDueDate: bulkDueDate } : {}) }),
+        })
+      ));
+    } else if (tab === "invoices") {
+      const items = filteredInv.filter(i => selectedIds.has(i.id));
+      await Promise.all(items.map(i =>
+        fetch(`/api/notas-fiscais/${i.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, ...(bulkDueDate ? { paymentDueDate: bulkDueDate } : {}) }),
+        })
+      ));
+    }
+    clearSelection();
+    setBulkSaving(false);
+    fetchAll();
+  }
+
+  // Info da seleção para a barra
+  const selectedReimb   = filteredReimb.filter(r => selectedIds.has(r.id));
+  const selectedInv     = filteredInv.filter(i => selectedIds.has(i.id));
+  const selectedTotal   = tab === "reimbursements"
+    ? selectedReimb.reduce((s, r) => s + r.expense.amount, 0)
+    : selectedInv.reduce((s, i) => s + i.invoice.amount, 0);
+  const hasPending      = tab === "reimbursements"
+    ? selectedReimb.some(r => r.status === "pending")
+    : selectedInv.some(i => i.status === "pending");
+  const hasApproved     = selectedReimb.some(r => r.status === "approved");
+  const hasReceived     = selectedInv.some(i => i.status === "received");
+  const showBulkBar     = selectedIds.size > 0 && (tab === "reimbursements" || tab === "invoices");
 
   const tabs = [
     { key: "travels"        as Tab, label: "Viagens",      count: travels.length,       pending: travels.filter((r) => r.status === "pending").length },
@@ -209,10 +366,16 @@ export default function AdminPage() {
     return { groups, singles };
   }, [filteredReimb]);
 
+  // Selectables count for UI
+  const selectableCount = tab === "reimbursements"
+    ? filteredReimb.filter(r => r.status !== "paid").length
+    : filteredInv.filter(i => i.status !== "paid").length;
+  const allSelected = selectableCount > 0 && selectedIds.size >= selectableCount;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header isAdmin title="Painel Admin" />
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className={`max-w-5xl mx-auto px-4 py-8 ${showBulkBar ? "pb-24" : ""}`}>
 
         {/* Resumo financeiro global */}
         {!loading && (
@@ -275,7 +438,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Filtro A pagar / Pago — só para reembolsos e notas fiscais */}
+        {/* Filtro A pagar / Pago */}
         {(tab === "reimbursements" || tab === "invoices") && (
           <div className="flex gap-2 mb-4">
             {(["all", "topay", "paid"] as PayFilter[]).map((f) => {
@@ -311,7 +474,6 @@ export default function AdminPage() {
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
               className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
           </div>
-          {/* Atalhos de ano */}
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-medium text-slate-500">Ano</label>
             <div className="flex gap-1">
@@ -333,8 +495,8 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Total + ações */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Total + ações + seleção em lote */}
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="text-sm text-slate-500">
             {tab === "reimbursements" && filteredReimb.length > 0 && (
               <span>
@@ -358,7 +520,15 @@ export default function AdminPage() {
               <span>{filteredTravels.length} solicitação(ões)</span>
             )}
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
+            {/* Botão selecionar tudo — só em reembolsos e NF */}
+            {(tab === "reimbursements" || tab === "invoices") && selectableCount > 0 && (
+              <button
+                onClick={allSelected ? clearSelection : selectAll}
+                className={`text-sm font-medium border rounded-lg px-3 py-1.5 transition ${allSelected ? "bg-orange-50 text-orange-600 border-orange-300" : "bg-white text-slate-600 border-slate-200 hover:border-orange-300"}`}>
+                {allSelected ? `✓ ${selectedIds.size} selecionados` : `Selecionar todos (${selectableCount})`}
+              </button>
+            )}
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}
               className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
               <option value="date_desc">↓ Mais recentes</option>
@@ -411,7 +581,6 @@ export default function AdminPage() {
             {filteredReimb.length === 0 && <Empty />}
             {groupByMonth(filteredReimb).map((group, gi) => {
               const monthTotal = formatCurrency(group.items.reduce((s, r) => s + r.expense.amount, 0));
-              // grupos por batch dentro do mês
               const batchMap = new Map<string, ReimbursementRequest[]>();
               const singles: ReimbursementRequest[] = [];
               for (const r of group.items) {
@@ -434,12 +603,18 @@ export default function AdminPage() {
                         </a>
                       </div>
                       <div className="divide-y divide-slate-100">
-                        {items.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
+                        {items.map((req) => (
+                          <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested
+                            selected={selectedIds.has(req.id)} onToggle={toggleSelect} />
+                        ))}
                       </div>
                     </div>
                   ))}
                   {/* Individuais */}
-                  {singles.map((req) => <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested />)}
+                  {singles.map((req) => (
+                    <ReimbursementCard key={req.id} req={req} onUpdate={fetchAll} nested
+                      selected={selectedIds.has(req.id)} onToggle={toggleSelect} />
+                  ))}
                 </MonthSection>
               );
             })}
@@ -454,13 +629,33 @@ export default function AdminPage() {
               const monthTotal = formatCurrency(group.items.reduce((s, i) => s + i.invoice.amount, 0));
               return (
                 <MonthSection key={group.key} label={group.label} count={group.items.length} total={monthTotal} defaultOpen={gi === 0}>
-                  {group.items.map((inv) => <InvoiceCard key={inv.id} inv={inv} onUpdate={fetchAll} nested />)}
+                  {group.items.map((inv) => (
+                    <InvoiceCard key={inv.id} inv={inv} onUpdate={fetchAll} nested
+                      selected={selectedIds.has(inv.id)} onToggle={toggleSelect} />
+                  ))}
                 </MonthSection>
               );
             })}
           </div>
         )}
       </main>
+
+      {/* Barra de ações em lote */}
+      {showBulkBar && (
+        <BulkActionBar
+          count={selectedIds.size}
+          total={selectedTotal}
+          dueDate={bulkDueDate}
+          onDueDateChange={setBulkDueDate}
+          onAction={handleBulkAction}
+          saving={bulkSaving}
+          onClear={clearSelection}
+          hasPending={hasPending}
+          hasApproved={hasApproved}
+          hasReceived={hasReceived}
+          type={tab as "reimbursements" | "invoices"}
+        />
+      )}
     </div>
   );
 }
@@ -511,13 +706,17 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
   );
 }
 
-function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementRequest; onUpdate: () => void; nested?: boolean }) {
+function ReimbursementCard({ req, onUpdate, nested, selected, onToggle }: {
+  req: ReimbursementRequest; onUpdate: () => void; nested?: boolean;
+  selected?: boolean; onToggle?: (id: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(req.adminNote ?? "");
   const [dueDate, setDueDate] = useState(req.paymentDueDate ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const s = REIMB_STATUS[req.status] ?? { label: req.status, color: "bg-slate-100 text-slate-600" };
+  const canSelect = req.status !== "paid";
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -540,128 +739,146 @@ function ReimbursementCard({ req, onUpdate, nested }: { req: ReimbursementReques
   }
 
   return (
-    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex`}>
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex ${selected ? "bg-orange-50" : ""}`}>
       <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(req.status)}`} />
-      <div className="flex-1 min-w-0">
-      {!nested && <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />}
-      <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.color}`}>{s.label}</span>
-              <span className="text-xs text-slate-400">💸 Reembolso</span>
-            </div>
-            <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">· {req.expense.description}</span></p>
-            <p className="text-sm text-slate-400">{req.requester.email} · {formatCurrency(req.expense.amount)} · {req.expense.date}</p>
-            {req.paymentDueDate && (
-              <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
-            )}
-          </div>
-          <span className={`text-slate-300 ${nested ? "" : "pr-6"}`}>{open ? "▲" : "▼"}</span>
-        </div>
-      </button>
 
-      {open && (
-        <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-slate-400">Categoria:</span> <span className="text-slate-700 capitalize">{req.expense.category}</span></div>
-            <div><span className="text-slate-400">Data:</span> <span className="text-slate-700">{req.expense.date}</span></div>
-            <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(req.expense.amount)}</span></div>
-            <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(req.createdAt)}</span></div>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            {req.expense.receiptFile && (
-              <a href={`/api/files/${req.expense.receiptFile}`} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
-                📎 Ver comprovante
-              </a>
-            )}
-            <label className={`inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer border rounded-lg px-3 py-1.5 transition ${uploading ? "text-slate-400 border-slate-200" : "text-blue-600 border-blue-200 hover:bg-blue-50"}`}>
-              {uploading ? "Enviando..." : req.expense.receiptFile ? "🔄 Substituir comprovante" : "📎 Anexar comprovante"}
-              <input type="file" accept="image/*,.pdf" className="hidden"
-                disabled={uploading}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
-            </label>
-          </div>
-
-          {req.status !== "paid" && (
-            <>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
-                placeholder="Observação (opcional)..."
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
-
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                  className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
-                  {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Aprovar"}
-                </button>
-                <button onClick={() => updateStatus("rejected")} disabled={saving || req.status === "rejected"}
-                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
-                  {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
-                </button>
-                {req.status === "approved" && (
-                  <button onClick={() => updateStatus("paid")} disabled={saving}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
-                    {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💸 Marcar como pago"}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {req.paymentDueDate && req.status !== "paid" && (
-            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
-              <span>📅</span>
-              <span>Previsão de pagamento: <strong>{new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
-            </div>
-          )}
-
-          {req.status === "paid" && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-              <span className="text-green-600 text-lg">✓</span>
-              <p className="text-sm text-green-700 font-medium">Reembolso pago</p>
-            </div>
-          )}
-
-          {req.adminNote && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
-              <p className="text-sm text-slate-700">{req.adminNote}</p>
-            </div>
-          )}
-
-          {req.history && req.history.length > 0 && (
-            <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Histórico</p>
-              <div className="space-y-1">
-                {req.history.map((h, i) => (
-                  <p key={i} className="text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{h.action}</span> por {h.by} · {formatDate(h.date)}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Checkbox */}
+      {onToggle && canSelect && (
+        <div className="flex items-start justify-center pt-5 px-3">
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={(e) => { e.stopPropagation(); onToggle(req.id); }}
+            className="w-4 h-4 rounded accent-orange-500 cursor-pointer"
+          />
         </div>
       )}
+      {onToggle && !canSelect && <div className="w-10" />}
+
+      <div className="flex-1 min-w-0">
+        {!nested && <DeleteButton onDelete={async () => { await fetch(`/api/reembolso/${req.id}`, { method: "DELETE" }); onUpdate(); }} />}
+        <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.color}`}>{s.label}</span>
+                <span className="text-xs text-slate-400">💸 Reembolso</span>
+              </div>
+              <p className="font-semibold text-slate-800">{req.requester.name} <span className="font-normal text-slate-400 text-sm">· {req.expense.description}</span></p>
+              <p className="text-sm text-slate-400">{req.requester.email} · {formatCurrency(req.expense.amount)} · {req.expense.date}</p>
+              {req.paymentDueDate && (
+                <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+              )}
+            </div>
+            <span className={`text-slate-300 ${nested ? "" : "pr-6"}`}>{open ? "▲" : "▼"}</span>
+          </div>
+        </button>
+
+        {open && (
+          <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-slate-400">Categoria:</span> <span className="text-slate-700 capitalize">{req.expense.category}</span></div>
+              <div><span className="text-slate-400">Data:</span> <span className="text-slate-700">{req.expense.date}</span></div>
+              <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(req.expense.amount)}</span></div>
+              <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(req.createdAt)}</span></div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              {req.expense.receiptFile && (
+                <a href={`/api/files/${req.expense.receiptFile}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium">
+                  📎 Ver comprovante
+                </a>
+              )}
+              <label className={`inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer border rounded-lg px-3 py-1.5 transition ${uploading ? "text-slate-400 border-slate-200" : "text-blue-600 border-blue-200 hover:bg-blue-50"}`}>
+                {uploading ? "Enviando..." : req.expense.receiptFile ? "🔄 Substituir comprovante" : "📎 Anexar comprovante"}
+                <input type="file" accept="image/*,.pdf" className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+              </label>
+            </div>
+
+            {req.status !== "paid" && (
+              <>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                  placeholder="Observação (opcional)..."
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
+                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                    className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => updateStatus("approved")} disabled={saving || req.status === "approved"}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                    {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Aprovar"}
+                  </button>
+                  <button onClick={() => updateStatus("rejected")} disabled={saving || req.status === "rejected"}
+                    className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                    {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
+                  </button>
+                  {req.status === "approved" && (
+                    <button onClick={() => updateStatus("paid")} disabled={saving}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
+                      {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💸 Marcar como pago"}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {req.paymentDueDate && req.status !== "paid" && (
+              <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+                <span>📅</span>
+                <span>Previsão de pagamento: <strong>{new Date(req.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
+              </div>
+            )}
+
+            {req.status === "paid" && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                <span className="text-green-600 text-lg">✓</span>
+                <p className="text-sm text-green-700 font-medium">Reembolso pago</p>
+              </div>
+            )}
+
+            {req.adminNote && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
+                <p className="text-sm text-slate-700">{req.adminNote}</p>
+              </div>
+            )}
+
+            {req.history && req.history.length > 0 && (
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Histórico</p>
+                <div className="space-y-1">
+                  {req.history.map((h, i) => (
+                    <p key={i} className="text-xs text-slate-500">
+                      <span className="font-medium text-slate-700">{h.action}</span> por {h.by} · {formatDate(h.date)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: () => void; nested?: boolean }) {
+function InvoiceCard({ inv, onUpdate, nested, selected, onToggle }: {
+  inv: InvoiceUpload; onUpdate: () => void; nested?: boolean;
+  selected?: boolean; onToggle?: (id: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(inv.adminNote ?? "");
   const [dueDate, setDueDate] = useState(inv.paymentDueDate ?? "");
   const [saving, setSaving] = useState(false);
   const s = INV_STATUS[inv.status] ?? { label: inv.status, color: "bg-slate-100 text-slate-600" };
+  const canSelect = inv.status !== "paid";
 
   async function updateStatus(status: string) {
     setSaving(true);
@@ -675,119 +892,129 @@ function InvoiceCard({ inv, onUpdate, nested }: { inv: InvoiceUpload; onUpdate: 
   }
 
   return (
-    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex`}>
+    <div className={`relative bg-white ${nested ? "" : "rounded-2xl border border-slate-200 shadow-sm"} overflow-hidden flex ${selected ? "bg-orange-50" : ""}`}>
       <div className={`w-1.5 flex-shrink-0 ${getStatusBorder(inv.status)}`} />
-      <div className="flex-1 min-w-0">
-      <DeleteButton onDelete={async () => { await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" }); onUpdate(); }} />
-      <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.color}`}>{s.label}</span>
-              <span className="text-xs text-slate-400">🧾 Nota Fiscal</span>
-            </div>
-            <p className="font-semibold text-slate-800">{inv.requester.name} <span className="font-normal text-slate-400 text-sm">· {inv.invoice.description}</span></p>
-            <p className="text-sm text-slate-400">{formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
-            {inv.paymentDueDate && (
-              <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
-            )}
-          </div>
-          <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
-        </div>
-      </button>
 
-      {open && (
-        <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {inv.invoice.invoiceNumber && <div><span className="text-slate-400">Número da NF:</span> <span className="text-slate-700 font-semibold">{inv.invoice.invoiceNumber}</span></div>}
-            {inv.invoice.invoiceDate && <div><span className="text-slate-400">Data de emissão:</span> <span className="text-slate-700">{new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</span></div>}
-            <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(inv.invoice.amount)}</span></div>
-            <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(inv.createdAt)}</span></div>
-          </div>
-
-          {inv.invoice.invoiceFile && (
-            <div className="flex items-center gap-4 flex-wrap">
-              <a
-                href={`/api/notas-fiscais/${inv.id}/file`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-2 rounded-xl transition"
-              >
-                📎 Ver anexo da NF
-              </a>
-            </div>
-          )}
-
-          {inv.status !== "paid" && (
-            <>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
-                placeholder="Observação para o solicitante (opcional)..."
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
-
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                  className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {inv.status === "pending" && (
-                  <>
-                    <button onClick={() => updateStatus("received")} disabled={saving}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-44 flex items-center justify-center gap-1.5">
-                      {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Confirmar recebimento"}
-                    </button>
-                    <button onClick={() => updateStatus("rejected")} disabled={saving}
-                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
-                      {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
-                    </button>
-                  </>
-                )}
-                {inv.status === "received" && (
-                  <button onClick={() => updateStatus("paid")} disabled={saving}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
-                    {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💰 Marcar como pago"}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {inv.paymentDueDate && inv.status !== "paid" && (
-            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
-              <span>📅</span>
-              <span>Previsão de pagamento: <strong>{new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
-            </div>
-          )}
-
-          {inv.status === "paid" && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-              <span className="text-green-600 text-lg">✓</span>
-              <p className="text-sm text-green-700 font-medium">Nota fiscal paga</p>
-            </div>
-          )}
-
-          {inv.adminNote && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
-              <p className="text-sm text-slate-700">{inv.adminNote}</p>
-            </div>
-          )}
-
-          {inv.history && inv.history.length > 0 && (
-            <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Histórico</p>
-              <div className="space-y-1">
-                {inv.history.map((h, i) => (
-                  <p key={i} className="text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{h.action}</span> por {h.by} · {formatDate(h.date)}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Checkbox */}
+      {onToggle && canSelect && (
+        <div className="flex items-start justify-center pt-5 px-3">
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={(e) => { e.stopPropagation(); onToggle(inv.id); }}
+            className="w-4 h-4 rounded accent-orange-500 cursor-pointer"
+          />
         </div>
       )}
+      {onToggle && !canSelect && <div className="w-10" />}
+
+      <div className="flex-1 min-w-0">
+        <DeleteButton onDelete={async () => { await fetch(`/api/notas-fiscais/${inv.id}`, { method: "DELETE" }); onUpdate(); }} />
+        <button onClick={() => setOpen((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.color}`}>{s.label}</span>
+                <span className="text-xs text-slate-400">🧾 Nota Fiscal</span>
+              </div>
+              <p className="font-semibold text-slate-800">{inv.requester.name} <span className="font-normal text-slate-400 text-sm">· {inv.invoice.description}</span></p>
+              <p className="text-sm text-slate-400">{formatCurrency(inv.invoice.amount)} · {formatDate(inv.createdAt)}</p>
+              {inv.paymentDueDate && (
+                <p className="text-xs text-blue-500 mt-0.5 font-medium">📅 Previsão: {new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+              )}
+            </div>
+            <span className="text-slate-300 pr-6">{open ? "▲" : "▼"}</span>
+          </div>
+        </button>
+
+        {open && (
+          <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {inv.invoice.invoiceNumber && <div><span className="text-slate-400">Número da NF:</span> <span className="text-slate-700 font-semibold">{inv.invoice.invoiceNumber}</span></div>}
+              {inv.invoice.invoiceDate && <div><span className="text-slate-400">Data de emissão:</span> <span className="text-slate-700">{new Date(inv.invoice.invoiceDate + "T12:00:00").toLocaleDateString("pt-BR")}</span></div>}
+              <div><span className="text-slate-400">Valor:</span> <span className="text-slate-700 font-semibold">{formatCurrency(inv.invoice.amount)}</span></div>
+              <div><span className="text-slate-400">Enviado:</span> <span className="text-slate-700">{formatDate(inv.createdAt)}</span></div>
+            </div>
+
+            {inv.invoice.invoiceFile && (
+              <div className="flex items-center gap-4 flex-wrap">
+                <a href={`/api/notas-fiscais/${inv.id}/file`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-2 rounded-xl transition">
+                  📎 Ver anexo da NF
+                </a>
+              </div>
+            )}
+
+            {inv.status !== "paid" && (
+              <>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                  placeholder="Observação para o solicitante (opcional)..."
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap">📅 Previsão de pagamento</label>
+                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                    className="border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  {inv.status === "pending" && (
+                    <>
+                      <button onClick={() => updateStatus("received")} disabled={saving}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-44 flex items-center justify-center gap-1.5">
+                        {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✓ Confirmar recebimento"}
+                      </button>
+                      <button onClick={() => updateStatus("rejected")} disabled={saving}
+                        className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-24 flex items-center justify-center gap-1.5">
+                        {saving ? <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "✗ Recusar"}
+                      </button>
+                    </>
+                  )}
+                  {inv.status === "received" && (
+                    <button onClick={() => updateStatus("paid")} disabled={saving}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition min-w-36 flex items-center justify-center gap-1.5">
+                      {saving ? <><span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Salvando...</> : "💰 Marcar como pago"}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {inv.paymentDueDate && inv.status !== "paid" && (
+              <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+                <span>📅</span>
+                <span>Previsão de pagamento: <strong>{new Date(inv.paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong></span>
+              </div>
+            )}
+
+            {inv.status === "paid" && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                <span className="text-green-600 text-lg">✓</span>
+                <p className="text-sm text-green-700 font-medium">Nota fiscal paga</p>
+              </div>
+            )}
+
+            {inv.adminNote && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-xs font-semibold text-slate-500 mb-1">Observação</p>
+                <p className="text-sm text-slate-700">{inv.adminNote}</p>
+              </div>
+            )}
+
+            {inv.history && inv.history.length > 0 && (
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Histórico</p>
+                <div className="space-y-1">
+                  {inv.history.map((h, i) => (
+                    <p key={i} className="text-xs text-slate-500">
+                      <span className="font-medium text-slate-700">{h.action}</span> por {h.by} · {formatDate(h.date)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
