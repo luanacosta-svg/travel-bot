@@ -285,25 +285,13 @@ export default function AdminPage() {
 
   async function handleBulkAction(status: string) {
     setBulkSaving(true);
-    if (tab === "reimbursements") {
-      const items = filteredReimb.filter(r => selectedIds.has(r.id));
-      await Promise.all(items.map(r =>
-        fetch(`/api/reembolso/${r.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status, ...(bulkDueDate ? { paymentDueDate: bulkDueDate } : {}) }),
-        })
-      ));
-    } else if (tab === "invoices") {
-      const items = filteredInv.filter(i => selectedIds.has(i.id));
-      await Promise.all(items.map(i =>
-        fetch(`/api/notas-fiscais/${i.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status, ...(bulkDueDate ? { paymentDueDate: bulkDueDate } : {}) }),
-        })
-      ));
-    }
+    const ids = Array.from(selectedIds);
+    const url = tab === "reimbursements" ? "/api/reembolso/bulk" : "/api/notas-fiscais/bulk";
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, status, ...(bulkDueDate ? { paymentDueDate: bulkDueDate } : {}) }),
+    });
     clearSelection();
     setBulkSaving(false);
     fetchAll();

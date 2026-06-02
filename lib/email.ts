@@ -291,6 +291,130 @@ export async function sendReimbursementPaidNotification(req: ReimbursementReques
   });
 }
 
+export async function sendBulkReimbursementStatusUpdate(
+  items: ReimbursementRequest[],
+  status: string,
+  paymentDueDate?: string
+): Promise<void> {
+  if (items.length === 0) return;
+  const transport = createTransport();
+  const requester = items[0].requester;
+  const total = items.reduce((s, r) => s + r.expense.amount, 0);
+  const totalStr = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const approved = status === "approved";
+  const paid = status === "paid";
+
+  const rows = items.map(r => {
+    const amt = r.expense.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#374151;">${r.expense.description}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;color:#374151;">${amt}</td>
+    </tr>`;
+  }).join("");
+
+  const statusLabel = paid ? "pagos" : approved ? "aprovados" : "recusados";
+  const statusIcon  = paid ? "💸" : approved ? "✓" : "✗";
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${requester.name}</strong>!</p>
+    <p style="color:#374151;"><strong>${items.length} reembolso${items.length !== 1 ? "s" : ""}</strong> foram <strong>${statusLabel} ${statusIcon}</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;border-radius:8px;overflow:hidden;">
+      <thead>
+        <tr style="background:#e2e8f0;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">Descrição</th>
+          <th style="padding:8px 12px;text-align:right;font-size:12px;color:#64748b;font-weight:600;">Valor</th>
+        </tr>
+      </thead>
+      <tbody style="background:#f8fafc;">${rows}</tbody>
+      <tfoot>
+        <tr style="background:#e2e8f0;">
+          <td style="padding:8px 12px;font-weight:700;color:#1e293b;">Total</td>
+          <td style="padding:8px 12px;text-align:right;font-weight:700;color:#1e293b;">${totalStr}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${(approved || paid) && paymentDueDate
+      ? `<div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+           <p style="margin:0;font-weight:600;color:#1d4ed8;">📅 Previsão de pagamento</p>
+           <p style="margin:4px 0 0;color:#374151;">${new Date(paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+         </div>`
+      : approved
+        ? `<p style="color:#374151;">Os valores serão processados em breve. Qualquer dúvida, entre em contato.</p>`
+        : paid
+          ? `<p style="color:#374151;">Os pagamentos foram realizados. Qualquer dúvida, entre em contato.</p>`
+          : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
+
+  await transport.sendMail({
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
+    to: requester.email,
+    cc: process.env.MANAGER_EMAIL,
+    subject: `${statusIcon} ${items.length} reembolso${items.length !== 1 ? "s" : ""} ${statusLabel} — ${totalStr}`,
+    html: baseTemplate(`Reembolsos ${statusLabel} — ${requester.name}`, body),
+  });
+}
+
+export async function sendBulkInvoiceStatusUpdate(
+  items: InvoiceUpload[],
+  status: string,
+  paymentDueDate?: string
+): Promise<void> {
+  if (items.length === 0) return;
+  const transport = createTransport();
+  const requester = items[0].requester;
+  const total = items.reduce((s, i) => s + i.invoice.amount, 0);
+  const totalStr = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const received = status === "received";
+  const paid = status === "paid";
+
+  const rows = items.map(i => {
+    const amt = i.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#374151;">${i.invoice.description}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;color:#374151;">${amt}</td>
+    </tr>`;
+  }).join("");
+
+  const statusLabel = paid ? "pagas" : received ? "recebidas" : "recusadas";
+  const statusIcon  = paid ? "💰" : received ? "✓" : "✗";
+
+  const body = `
+    <p style="color:#374151;">Olá, <strong>${requester.name}</strong>!</p>
+    <p style="color:#374151;"><strong>${items.length} nota${items.length !== 1 ? "s fiscal" : " fiscal"}</strong> foram <strong>${statusLabel} ${statusIcon}</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;border-radius:8px;overflow:hidden;">
+      <thead>
+        <tr style="background:#e2e8f0;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">Descrição</th>
+          <th style="padding:8px 12px;text-align:right;font-size:12px;color:#64748b;font-weight:600;">Valor</th>
+        </tr>
+      </thead>
+      <tbody style="background:#f8fafc;">${rows}</tbody>
+      <tfoot>
+        <tr style="background:#e2e8f0;">
+          <td style="padding:8px 12px;font-weight:700;color:#1e293b;">Total</td>
+          <td style="padding:8px 12px;text-align:right;font-weight:700;color:#1e293b;">${totalStr}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${(received || paid) && paymentDueDate
+      ? `<div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+           <p style="margin:0;font-weight:600;color:#1d4ed8;">📅 Previsão de pagamento</p>
+           <p style="margin:4px 0 0;color:#374151;">${new Date(paymentDueDate + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+         </div>`
+      : received
+        ? `<p style="color:#374151;">Os valores serão processados em breve.</p>`
+        : paid
+          ? `<p style="color:#374151;">Os pagamentos foram realizados.</p>`
+          : `<p style="color:#374151;">Para mais informações, entre em contato com a equipe.</p>`}`;
+
+  await transport.sendMail({
+    from: `"49Pay" <${process.env.GMAIL_USER}>`,
+    to: requester.email,
+    cc: process.env.MANAGER_EMAIL,
+    subject: `${statusIcon} ${items.length} nota${items.length !== 1 ? "s fiscal" : " fiscal"} ${statusLabel} — ${totalStr}`,
+    html: baseTemplate(`Notas fiscais ${statusLabel} — ${requester.name}`, body),
+  });
+}
+
 export async function sendInvoiceNotification(req: InvoiceUpload): Promise<void> {
   const transport = createTransport();
   const amount = req.invoice.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
