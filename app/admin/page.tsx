@@ -90,12 +90,13 @@ function exportCSV(rows: string[][], filename: string) {
 // ── Barra de ações em lote ────────────────────────────────────────────────
 function BulkActionBar({
   count, total, dueDate, onDueDateChange,
-  onAction, saving, onClear,
+  onAction, onGeneratePdf, saving, onClear,
   hasPending, hasApproved, hasReceived, type,
 }: {
   count: number; total: number; dueDate: string;
   onDueDateChange: (v: string) => void;
   onAction: (status: string) => void;
+  onGeneratePdf: () => void;
   saving: boolean; onClear: () => void;
   hasPending: boolean; hasApproved: boolean; hasReceived: boolean;
   type: "reimbursements" | "invoices";
@@ -162,6 +163,12 @@ function BulkActionBar({
                 </button>
               )}
             </>
+          )}
+          {type === "reimbursements" && (
+            <button onClick={onGeneratePdf} disabled={saving}
+              className="bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+              📄 Gerar PDF
+            </button>
           )}
           <button onClick={onClear}
             className="text-sm text-slate-400 hover:text-slate-600 border border-slate-200 rounded-xl px-3 py-2 transition">
@@ -281,6 +288,24 @@ export default function AdminPage() {
   function clearSelection() {
     setSelectedIds(new Set());
     setBulkDueDate("");
+  }
+
+  async function handleGeneratePdf() {
+    const ids = Array.from(selectedIds);
+    const res = await fetch("/api/reembolso/pdf/selection", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="(.+)"/);
+    const filename = match?.[1] ?? "reembolsos.pdf";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function handleBulkAction(status: string) {
@@ -659,6 +684,7 @@ export default function AdminPage() {
           dueDate={bulkDueDate}
           onDueDateChange={setBulkDueDate}
           onAction={handleBulkAction}
+          onGeneratePdf={handleGeneratePdf}
           saving={bulkSaving}
           onClear={clearSelection}
           hasPending={hasPending}
