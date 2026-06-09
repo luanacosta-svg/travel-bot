@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
       let receiptFile: string | undefined;
       const file = formData.get(`file_${i}`) as File | null;
       if (file && file.size > 0) {
-        receiptFile = await saveUploadedFile(file, `reimb-${id}`);
+        // sem limite de tamanho individual — aceita qualquer comprovante
+        receiptFile = await saveUploadedFile(file, `reimb-${id}`, Infinity);
       }
 
       const item: ReimbursementRequest = {
