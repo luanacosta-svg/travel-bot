@@ -149,6 +149,19 @@ export default function ReembolsoPage() {
     setError("");
 
     try {
+      // Verifica tamanho total antes de enviar (limite: 50 MB)
+      const MAX_TOTAL_BYTES = 50 * 1024 * 1024;
+      const totalBytes = items.reduce((s, it) => s + (it.file?.size ?? 0), 0);
+      if (totalBytes > MAX_TOTAL_BYTES) {
+        throw new Error(`Total dos arquivos (${(totalBytes / 1024 / 1024).toFixed(1)} MB) excede o limite de 50 MB. Reduza o tamanho dos comprovantes.`);
+      }
+
+      // Verifica arquivo individual > 10 MB
+      const oversized = items.find(it => it.file && it.file.size > 10 * 1024 * 1024);
+      if (oversized) {
+        throw new Error(`O arquivo "${oversized.fileName}" é muito grande (máx. 10 MB por comprovante).`);
+      }
+
       const formData = new FormData();
       formData.append("count", String(items.length));
       items.forEach((item, i) => {
@@ -161,7 +174,7 @@ export default function ReembolsoPage() {
 
       const res = await fetch("/api/reembolso/submit", { method: "POST", body: formData });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(d.error ?? "Erro ao enviar");
+      if (!res.ok) throw new Error(d.error ?? "Erro ao enviar. Tente novamente.");
       clearDraft();
       router.push("/minhas-solicitacoes?novo=1");
     } catch (err) {

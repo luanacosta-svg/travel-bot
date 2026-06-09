@@ -92,6 +92,14 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── Nonce CSP (Web Crypto — Edge compatible) ──
+  // Rotas de API retornam JSON — não precisam de nonce no request e não devemos
+  // recriar o Request (isso pode corromper o body stream em uploads grandes).
+  if (pathname.startsWith("/api/")) {
+    const res = NextResponse.next();
+    res.headers.set("Content-Security-Policy", buildCsp("api-no-nonce"));
+    return res;
+  }
+
   const nonceArray = new Uint8Array(16);
   crypto.getRandomValues(nonceArray);
   const nonce = btoa(String.fromCharCode(...nonceArray));
