@@ -308,6 +308,19 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function handleBatchPdf(batchId: string) {
+    const res = await fetch(`/api/reembolso/pdf/${batchId}`);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="(.+)"/);
+    const filename = match?.[1] ?? "reembolsos.pdf";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleBulkAction(status: string) {
     setBulkSaving(true);
     const ids = Array.from(selectedIds);
@@ -632,10 +645,10 @@ export default function AdminPage() {
                             <span className="ml-2 text-xs text-slate-500">{items[0].requester.name} · {formatCurrency(items.reduce((s, r) => s + r.expense.amount, 0))}</span>
                           </div>
                         </div>
-                        <a href={`/api/reembolso/pdf/${batchId}`} target="_blank" rel="noopener noreferrer"
+                        <button type="button" onClick={() => handleBatchPdf(batchId)}
                           className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-white rounded-lg px-3 py-1 transition hover:bg-blue-50">
                           📄 Gerar PDF
-                        </a>
+                        </button>
                       </div>
                       <div className="divide-y divide-slate-100">
                         {items.map((req) => (
