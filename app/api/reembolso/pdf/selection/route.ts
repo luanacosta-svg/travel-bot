@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const today = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  // Remove caracteres fora do WinAnsi (emojis/símbolos) que derrubariam o drawText (500)
+  const san = (s: string) => s.replace(/[^\x00-\xFF]/g, "");
   const total = items.reduce((s, r) => s + r.expense.amount, 0);
 
   // Agrupa por solicitante para exibir no cabeçalho
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   y = height - 100;
 
-  page.drawText(`Solicitante(s): ${requesterLabel}`, { x: margin, y, size: 11, font: fontBold, color: rgb(0.12, 0.18, 0.27) });
+  page.drawText(`Solicitante(s): ${san(requesterLabel)}`, { x: margin, y, size: 11, font: fontBold, color: rgb(0.12, 0.18, 0.27) });
   y -= 16;
   page.drawText(`Gerado em: ${today}  ·  ${items.length} despesa${items.length > 1 ? "s" : ""}  ·  Total: ${fmt(total)}`, {
     x: margin, y, size: 10, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
@@ -88,9 +90,11 @@ export async function POST(req: NextRequest) {
     const bg = i % 2 === 0 ? rgb(1, 1, 1) : rgb(0.98, 0.99, 1);
     page.drawRectangle({ x: margin - 4, y: y - 4, width: width - margin * 2 + 8, height: rowH, color: bg });
 
-    const nameText = item.requester.name.length > 14 ? item.requester.name.slice(0, 14) + "…" : item.requester.name;
-    const descText = item.expense.description.length > 18 ? item.expense.description.slice(0, 18) + "…" : item.expense.description;
-    const catText  = item.expense.category.charAt(0).toUpperCase() + item.expense.category.slice(1);
+    const rawName = san(item.requester.name);
+    const rawDesc = san(item.expense.description);
+    const nameText = rawName.length > 14 ? rawName.slice(0, 14) + "…" : rawName;
+    const descText = rawDesc.length > 18 ? rawDesc.slice(0, 18) + "…" : rawDesc;
+    const catText  = san(item.expense.category.charAt(0).toUpperCase() + item.expense.category.slice(1));
     const statusLabel = REIMB_STATUS_LABELS[item.status] ?? item.status;
 
     page.drawText(nameText, { x: cols.solicitante, y: y + 5, size: 9, font: fontRegular, color: rgb(0.12, 0.18, 0.27) });
@@ -131,7 +135,7 @@ export async function POST(req: NextRequest) {
           const firstCopy = copiedPages[0];
           const ph = firstCopy.getHeight();
           firstCopy.drawRectangle({ x: 0, y: ph - 28, width: firstCopy.getWidth(), height: 28, color: rgb(0.97, 0.98, 0.99) });
-          firstCopy.drawText(`${item.requester.name} — ${item.expense.description} · ${fmt(item.expense.amount)}`, {
+          firstCopy.drawText(`${san(item.requester.name)} — ${san(item.expense.description)} · ${fmt(item.expense.amount)}`, {
             x: 12, y: ph - 18, size: 9, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
           });
           pdfDoc.addPage(firstCopy);
@@ -145,7 +149,7 @@ export async function POST(req: NextRequest) {
         const { width: pw, height: ph } = imgPage.getSize();
         const headerH = 36;
         imgPage.drawRectangle({ x: 0, y: ph - headerH, width: pw, height: headerH, color: rgb(0.97, 0.98, 0.99) });
-        imgPage.drawText(`${item.requester.name} — ${item.expense.description} · ${fmt(item.expense.amount)}`, {
+        imgPage.drawText(`${san(item.requester.name)} — ${san(item.expense.description)} · ${fmt(item.expense.amount)}`, {
           x: 12, y: ph - 22, size: 9, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
         });
         const availH = ph - headerH - 24;

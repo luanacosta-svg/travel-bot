@@ -40,10 +40,13 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   const total = items.reduce((s, r) => s + r.expense.amount, 0);
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const today = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  // Remove caracteres que a fonte padrão (WinAnsi) não consegue codificar — emojis,
+  // símbolos como ✓/✗/→, etc. — evitando que o drawText lance e derrube a rota (500).
+  const san = (s: string) => s.replace(/[^\x00-\xFF]/g, "");
 
-  page.drawText(`Solicitante: ${requester.name}`, { x: margin, y, size: 11, font: fontBold, color: rgb(0.12, 0.18, 0.27) });
+  page.drawText(`Solicitante: ${san(requester.name)}`, { x: margin, y, size: 11, font: fontBold, color: rgb(0.12, 0.18, 0.27) });
   y -= 16;
-  page.drawText(`Email: ${requester.email}`, { x: margin, y, size: 10, font: fontRegular, color: rgb(0.35, 0.43, 0.54) });
+  page.drawText(`Email: ${san(requester.email)}`, { x: margin, y, size: 10, font: fontRegular, color: rgb(0.35, 0.43, 0.54) });
   y -= 16;
   page.drawText(`Gerado em: ${today}  ·  ${items.length} despesa${items.length > 1 ? "s" : ""}  ·  Total: ${fmt(total)}`, {
     x: margin, y, size: 10, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
@@ -72,9 +75,10 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     const bg = i % 2 === 0 ? rgb(1, 1, 1) : rgb(0.98, 0.99, 1);
     page.drawRectangle({ x: margin - 4, y: y - 4, width: width - margin * 2 + 8, height: rowH, color: bg });
 
-    const descText = item.expense.description.length > 28 ? item.expense.description.slice(0, 28) + "…" : item.expense.description;
-    const catText = item.expense.category.charAt(0).toUpperCase() + item.expense.category.slice(1);
-    const statusLabel = item.status === "paid" ? "Pago ✓" : item.status === "approved" ? "Aprovado" : item.status === "rejected" ? "Recusado" : "Pendente";
+    const rawDesc = san(item.expense.description);
+    const descText = rawDesc.length > 28 ? rawDesc.slice(0, 28) + "…" : rawDesc;
+    const catText = san(item.expense.category.charAt(0).toUpperCase() + item.expense.category.slice(1));
+    const statusLabel = item.status === "paid" ? "Pago" : item.status === "approved" ? "Aprovado" : item.status === "rejected" ? "Recusado" : "Pendente";
 
     page.drawText(descText, { x: cols.desc, y: y + 5, size: 9, font: fontRegular, color: rgb(0.12, 0.18, 0.27) });
     page.drawText(catText, { x: cols.cat, y: y + 5, size: 9, font: fontRegular, color: rgb(0.12, 0.18, 0.27) });
@@ -114,7 +118,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
           const firstCopy = copiedPages[0];
           const ph = firstCopy.getHeight();
           firstCopy.drawRectangle({ x: 0, y: ph - 28, width: firstCopy.getWidth(), height: 28, color: rgb(0.97, 0.98, 0.99) });
-          firstCopy.drawText(`Comprovante: ${item.expense.description} · ${fmt(item.expense.amount)}`, {
+          firstCopy.drawText(`Comprovante: ${san(item.expense.description)} · ${fmt(item.expense.amount)}`, {
             x: 12, y: ph - 18, size: 9, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
           });
           pdfDoc.addPage(firstCopy);
@@ -133,7 +137,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
         // Mini cabeçalho
         imgPage.drawRectangle({ x: 0, y: ph - headerH, width: pw, height: headerH, color: rgb(0.97, 0.98, 0.99) });
-        imgPage.drawText(`Comprovante: ${item.expense.description} · ${fmt(item.expense.amount)}`, {
+        imgPage.drawText(`Comprovante: ${san(item.expense.description)} · ${fmt(item.expense.amount)}`, {
           x: 12, y: ph - 22, size: 9, font: fontRegular, color: rgb(0.35, 0.43, 0.54),
         });
 
