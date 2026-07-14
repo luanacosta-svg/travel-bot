@@ -277,8 +277,9 @@ export default function AdminPage() {
 
   function selectAll() {
     if (tab === "reimbursements") {
-      const selectable = filteredReimb.filter(r => r.status !== "paid").map(r => r.id);
-      setSelectedIds(new Set(selectable));
+      // Pagos também são selecionáveis — necessário para gerar PDF de itens já pagos.
+      // As ações em lote são seguras: o servidor ignora itens pagos.
+      setSelectedIds(new Set(filteredReimb.map(r => r.id)));
     } else if (tab === "invoices") {
       const selectable = filteredInv.filter(i => i.status !== "paid").map(i => i.id);
       setSelectedIds(new Set(selectable));
@@ -394,7 +395,7 @@ export default function AdminPage() {
 
   // Selectables count for UI
   const selectableCount = tab === "reimbursements"
-    ? filteredReimb.filter(r => r.status !== "paid").length
+    ? filteredReimb.length
     : filteredInv.filter(i => i.status !== "paid").length;
   const allSelected = selectableCount > 0 && selectedIds.size >= selectableCount;
 
@@ -617,7 +618,7 @@ export default function AdminPage() {
                 <MonthSection key={group.key} label={group.label} count={group.items.length} total={monthTotal} defaultOpen={gi === 0}>
                   {/* Lotes */}
                   {Array.from(batchMap.entries()).map(([batchId, items]) => {
-                    const batchSelectable = items.filter(r => r.status !== "paid");
+                    const batchSelectable = items; // pagos também — permite gerar PDF de lotes já pagos
                     const batchAllSelected = batchSelectable.length > 0 && batchSelectable.every(r => selectedIds.has(r.id));
                     function toggleBatch() {
                       setSelectedIds(prev => {
@@ -766,7 +767,8 @@ function ReimbursementCard({ req, onUpdate, nested, selected, onToggle }: {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const s = REIMB_STATUS[req.status] ?? { label: req.status, color: "bg-slate-100 text-slate-600" };
-  const canSelect = req.status !== "paid";
+  // Pagos também são selecionáveis (para gerar PDF); ações em lote ignoram pagos no servidor
+  const canSelect = true;
 
   async function handleUpload(file: File) {
     setUploading(true);
