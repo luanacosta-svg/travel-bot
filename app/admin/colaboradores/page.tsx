@@ -64,12 +64,15 @@ function exportCSV(employees: Employee[]) {
   URL.revokeObjectURL(url);
 }
 
+const SHIRT_SIZES = ["PP", "P", "M", "G", "GG", "XGG"];
+
 export default function ColaboradoresPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [search,    setSearch]    = useState("");
   const [squad,     setSquad]     = useState("Todos");
   const [statusFil, setStatusFil] = useState("Todos");
+  const [showShirts, setShowShirts] = useState(false);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -92,6 +95,18 @@ export default function ColaboradoresPage() {
     return true;
   }), [employees, search, squad, statusFil]);
 
+  // Relação de camisetas
+  const shirtGroups = useMemo(() => {
+    const bySize = new Map<string, Employee[]>();
+    for (const s of SHIRT_SIZES) bySize.set(s, []);
+    const missing: Employee[] = [];
+    for (const e of employees) {
+      if (e.shirtSize && bySize.has(e.shirtSize)) bySize.get(e.shirtSize)!.push(e);
+      else missing.push(e);
+    }
+    return { bySize, missing };
+  }, [employees]);
+
   const total       = employees.length;
   const vencendo    = employees.filter((e) => ["vencendo","vencido"].includes(contractStatusKey(e.contractEnd))).length;
   const atencao     = employees.filter((e) => contractStatusKey(e.contractEnd) === "atencao").length;
@@ -110,6 +125,16 @@ export default function ColaboradoresPage() {
             <p className="text-sm text-slate-500 mt-0.5">Substitui a planilha. Tudo aqui, sempre atualizado.</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowShirts((v) => !v)}
+              className={`text-sm font-semibold px-4 py-2 rounded-xl transition border ${
+                showShirts
+                  ? "bg-orange-500 border-orange-500 text-white"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-white"
+              }`}
+            >
+              👕 Camisetas
+            </button>
             <button
               onClick={() => exportCSV(filtered)}
               className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 hover:bg-white transition"
@@ -145,6 +170,76 @@ export default function ColaboradoresPage() {
             <p className="text-xs text-green-800 mt-0.5">{incompletos > 0 ? `${incompletos} c/ cadastro incompleto` : "tudo certo"}</p>
           </div>
         </div>
+
+        {/* Relação de camisetas */}
+        {showShirts && (
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-bold text-slate-800">👕 Relação de camisetas</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {total - shirtGroups.missing.length} de {total} preencheram o tamanho
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const rows = [["Tamanho", "Nome", "E-mail"]];
+                  for (const s of SHIRT_SIZES) {
+                    for (const e of shirtGroups.bySize.get(s) ?? []) rows.push([s, e.name, e.email]);
+                  }
+                  for (const e of shirtGroups.missing) rows.push(["(não informado)", e.name, e.email]);
+                  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+                  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `camisetas-${new Date().toISOString().split("T")[0]}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-xl hover:border-slate-300 transition"
+              >
+                ↓ Exportar CSV
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {SHIRT_SIZES.map((s) => {
+                const people = shirtGroups.bySize.get(s) ?? [];
+                return (
+                  <div key={s} className="border border-slate-200 rounded-xl p-3">
+                    <div className="flex items-baseline justify-between mb-2">
+                      <span className="text-lg font-extrabold text-slate-800">{s}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${people.length > 0 ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-400"}`}>
+                        {people.length}
+                      </span>
+                    </div>
+                    {people.length === 0 ? (
+                      <p className="text-xs text-slate-300">—</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {people.map((e) => (
+                          <li key={e.id} className="text-xs text-slate-600 truncate" title={e.name}>{e.name}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {shirtGroups.missing.length > 0 && (
+              <div className="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                <p className="text-xs font-semibold text-amber-800 mb-1">
+                  ⚠️ {shirtGroups.missing.length} sem tamanho informado
+                </p>
+                <p className="text-xs text-amber-700">
+                  {shirtGroups.missing.map((e) => e.name).join(" · ")}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Toolbar */}
         <div className="bg-white border border-slate-100 rounded-2xl p-4 mb-4">
