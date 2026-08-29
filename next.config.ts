@@ -13,6 +13,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["nodemailer", "amadeus", "@anthropic-ai/sdk"],
+  // Landing comercial pública: /conheca serve public/conheca/index.html
+  async rewrites() {
+    return [
+      { source: "/conheca",  destination: "/conheca/index.html" },
+      { source: "/conheca/", destination: "/conheca/index.html" },
+    ];
+  },
   async headers() {
     return [
       {
