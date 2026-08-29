@@ -4,11 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>49Pay — Reembolsos, notas fiscais, viagens e contratos em um só lugar</title>
-<meta name="description" content="O 49Pay reúne reembolsos, notas fiscais, viagens, colaboradores e contratos em uma única plataforma. Aprovação em lote, leitura automática de comprovantes por IA e trilha de auditoria pronta para a LGPD.">
-<meta name="theme-color" content="#f97316">
+<meta name="description" content="O 49Pay reúne reembolsos, notas fiscais, viagens, colaboradores e contratos numa plataforma única. Aprovação em lote, leitura automática de comprovantes por IA e trilha de auditoria pronta para a LGPD.">
+<meta name="theme-color" content="#E9600F">
 <link rel="icon" href="/logo-49.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/conheca/styles.css">
-
 <meta property="og:type" content="website">
 <meta property="og:title" content="49Pay — a burocracia do time em um lugar só">
 <meta property="og:description" content="Reembolsos, notas fiscais, viagens, colaboradores e contratos numa única plataforma. Aprovação em lote, IA que lê comprovantes e auditoria LGPD.">
@@ -17,121 +16,122 @@
 </head>
 <body>
 
-<!-- ─── NAV ─────────────────────────────────────────────────── -->
-<header class="nav">
-  <div class="wrap nav__inner">
-    <a href="#top" class="brand">
-      <img src="/logo-49.svg" alt="" width="32" height="32">
-      49Pay
+<div class="progress"><div class="progress__fill"></div></div>
+
+<header class="header">
+  <div class="wrap header__inner">
+    <a href="#topo" class="brand">
+      <img class="brand__mark" src="/logo-49.svg" alt="" width="26" height="26">
+      <span class="brand__name">49Pay</span>
     </a>
-    <nav class="nav__links">
+    <nav class="header__nav">
       <a href="#modulos">Módulos</a>
       <a href="#gestao">Gestão</a>
-      <a href="#ia">Automação</a>
+      <a href="#automacao">Automação</a>
       <a href="#seguranca">Segurança</a>
       <a href="#planos">Planos</a>
     </nav>
-    <div class="nav__cta">
-      <a class="btn btn--ghost btn--sm" href="#como-funciona">Como funciona</a>
-      <a class="btn btn--primary btn--sm" href="#contato">Agendar demonstração</a>
+    <div class="header__actions">
+      <a href="#implantacao" class="header__how">Como funciona</a>
+      <a href="#contato" class="btn btn--solid btn--sm">Agendar demonstração</a>
+      <button class="burger" aria-expanded="false" aria-label="Abrir menu" aria-controls="menu-mobile"><span></span></button>
     </div>
   </div>
+  <nav class="mobile-nav" id="menu-mobile">
+    <a href="#modulos">Módulos</a>
+    <a href="#gestao">Gestão</a>
+    <a href="#automacao">Automação</a>
+    <a href="#seguranca">Segurança</a>
+    <a href="#implantacao">Como funciona</a>
+    <a href="#planos">Planos</a>
+    <a href="#duvidas">Dúvidas</a>
+    <a href="#contato">Agendar demonstração</a>
+  </nav>
 </header>
 
-<!-- ─── HERO ────────────────────────────────────────────────── -->
-<main id="top">
-<section class="hero">
-  <div class="wrap hero__grid">
-    <div>
-      <span class="eyebrow"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--orange-500)"></span> Gestão financeira e de pessoas</span>
-      <h1>Toda a burocracia do seu time <span class="hl">em um lugar só</span>.</h1>
-      <p class="lead">
-        Reembolsos, notas fiscais, viagens, dados de colaboradores e contratos numa
-        plataforma única. O time envia pelo celular, o financeiro aprova em lote e
-        exporta pronto para a contabilidade — sem planilha, sem WhatsApp, sem e-mail perdido.
-      </p>
-      <div class="hero__actions">
-        <a class="btn btn--primary" href="#contato">Agendar uma demonstração</a>
-        <a class="btn btn--ghost" href="#modulos">Ver os módulos</a>
-      </div>
-      <div class="hero__chips">
-        <span class="chip"><span class="dot"></span> 6 módulos integrados</span>
-        <span class="chip"><span class="dot"></span> Aprovação em lote + PDF</span>
-        <span class="chip"><span class="dot"></span> IA lê o comprovante</span>
-        <span class="chip"><span class="dot"></span> Auditoria LGPD</span>
-      </div>
-    </div>
+<nav class="rail" aria-label="Seções da página">
+  <a href="#topo"><span>Início</span></a>
+  <a href="#problema"><span>Problema</span></a>
+  <a href="#modulos"><span>Módulos</span></a>
+  <a href="#gestao"><span>Gestão</span></a>
+  <a href="#automacao"><span>Automação</span></a>
+  <a href="#seguranca"><span>Segurança</span></a>
+  <a href="#implantacao"><span>Implantação</span></a>
+  <a href="#planos"><span>Planos</span></a>
+  <a href="#duvidas"><span>Dúvidas</span></a>
+  <a href="#contato"><span>Contato</span></a>
+</nav>
 
-    <!-- Mockup ilustrativo do painel -->
-    <div class="mock" aria-hidden="true">
-      <div class="mock__bar">
-        <span class="mock__dot"></span><span class="mock__dot"></span><span class="mock__dot"></span>
-        <span class="mock__url">app.suaempresa.com.br/admin</span>
+<main>
+
+<!-- ─── HERO ────────────────────────────────────────────────── -->
+<section id="topo" class="hero">
+  <div class="wrap">
+    <div class="hero__grid">
+      <div>
+        <p class="eyebrow">Gestão financeira e de pessoas</p>
+        <h1>Toda a burocracia do seu time em um lugar só.</h1>
+        <p class="hero__lead">Reembolsos, notas fiscais, viagens, dados de colaboradores e contratos numa plataforma única. O time envia pelo celular, o financeiro aprova em lote e exporta pronto para a contabilidade — sem planilha, sem WhatsApp, sem e-mail perdido.</p>
+        <div class="hero__actions">
+          <a href="#contato" class="btn btn--solid">Agendar uma demonstração</a>
+          <a href="#modulos" class="btn btn--line">Ver os módulos</a>
+        </div>
+        <div class="hero__proof">
+          <span>6 módulos integrados</span>
+          <span>Aprovação em lote + PDF</span>
+          <span>IA lê o comprovante</span>
+          <span>Auditoria LGPD</span>
+        </div>
       </div>
-      <div class="mock__top">
-        <div class="mock__brand"><span class="mock__logo">49</span> 49Pay</div>
-        <div class="mock__nav">
-          <span class="on">Solicitações</span><span>Colaboradores</span><span>Contratos</span><span>Auditoria</span>
+
+      <div class="mock" aria-hidden="true">
+        <div class="mock__bar">
+          <span class="mock__dot"></span><span class="mock__dot"></span><span class="mock__dot"></span>
+          <span class="mock__url">app.suaempresa.com.br/admin</span>
         </div>
-        <div class="mock__avatar">LC</div>
-      </div>
-      <div class="mock__body">
-        <div class="mock__kpis">
-          <div class="kpi"><div class="kpi__label">A aprovar</div><div class="kpi__value accent">14</div></div>
-          <div class="kpi"><div class="kpi__label">No mês</div><div class="kpi__value">R$ 38.420</div></div>
-          <div class="kpi"><div class="kpi__label">Contratos a vencer</div><div class="kpi__value">3</div></div>
-        </div>
-        <div class="mock__table">
-          <div class="mock__row mock__row--head"><span>Colaborador</span><span>Valor</span><span>Status</span></div>
-          <div class="mock__row">
-            <span class="mock__who"><span class="mock__ini" style="background:#ede9fe;color:#7c3aed">MA</span> Marina · Uber cliente</span>
-            <span class="mock__val">R$ 48,90</span><span><span class="pill pill--amber">Pendente</span></span>
+        <div class="mock__body">
+          <div class="mock__kpis">
+            <div class="kpi"><p class="kpi__label">A aprovar</p><p class="kpi__value">14</p></div>
+            <div class="kpi"><p class="kpi__label">No mês</p><p class="kpi__value num">R$ 38.420</p></div>
+            <div class="kpi"><p class="kpi__label">A vencer</p><p class="kpi__value">3</p></div>
           </div>
-          <div class="mock__row">
-            <span class="mock__who"><span class="mock__ini" style="background:#dbeafe;color:#1d4ed8">RS</span> Rafael · NF setembro</span>
-            <span class="mock__val">R$ 7.200,00</span><span><span class="pill pill--blue">Recebida</span></span>
+          <div class="mock__table">
+            <span class="th">Colaborador</span><span class="th r">Valor</span><span class="th r">Status</span>
+            <span class="td">Marina · Uber cliente</span><span class="td r num">R$ 48,90</span><span class="td r st-pend">Pendente</span>
+            <span class="td">Rafael · NF setembro</span><span class="td r num">R$ 7.200,00</span><span class="td r st-rec">Recebida</span>
+            <span class="td">Camila · Almoço evento</span><span class="td r num">R$ 132,00</span><span class="td r st-pago">Pago</span>
+            <span class="td">João · Contrato PJ</span><span class="td r st-none">—</span><span class="td r st-venc">Vencido</span>
           </div>
-          <div class="mock__row">
-            <span class="mock__who"><span class="mock__ini" style="background:#dcfce7;color:#15803d">CP</span> Camila · Almoço evento</span>
-            <span class="mock__val">R$ 132,00</span><span><span class="pill pill--green">Pago</span></span>
+          <div class="mock__foot">
+            <span class="num">3 selecionados · R$ 7.380,90</span>
+            <span class="mock__btn">Aprovar em lote</span>
           </div>
-          <div class="mock__row">
-            <span class="mock__who"><span class="mock__ini" style="background:#fee2e2;color:#b91c1c">JB</span> João · Contrato PJ</span>
-            <span class="mock__val">—</span><span><span class="pill pill--red">Vencido</span></span>
-          </div>
-        </div>
-        <div class="mock__foot">
-          <span>3 selecionados · R$ 7.380,90</span>
-          <span class="mock__btn">Aprovar em lote</span>
         </div>
       </div>
     </div>
   </div>
-  <div style="height:88px"></div>
 </section>
 
-<!-- ─── DORES ───────────────────────────────────────────────── -->
-<section class="pain" id="problema">
+<!-- ─── PROBLEMA ────────────────────────────────────────────── -->
+<section id="problema" class="section">
   <div class="wrap">
-    <div class="section-head reveal" style="margin-bottom:0">
-      <span class="eyebrow eyebrow--plain">O problema</span>
-      <h2>Se alguma dessas cenas é familiar, o 49Pay foi feito pra você.</h2>
-    </div>
-    <div class="pain__grid reveal">
-      <div class="pain__item">
-        <strong>Comprovante no WhatsApp</strong>
+    <p class="eyebrow">O problema</p>
+    <h2 class="h2" style="margin-bottom:56px">Se alguma dessas cenas é familiar, o 49Pay foi feito pra você.</h2>
+    <div class="pain">
+      <div class="pain__cell">
+        <h3>Comprovante no WhatsApp</h3>
         <p>Foto de nota fiscal perdida no meio de conversa, sem valor, sem data, sem rastro.</p>
       </div>
-      <div class="pain__item">
-        <strong>A planilha que ninguém fecha</strong>
+      <div class="pain__cell">
+        <h3>A planilha que ninguém fecha</h3>
         <p>Reembolso do mês montado à mão, conferido duas vezes e mesmo assim com erro.</p>
       </div>
-      <div class="pain__item">
-        <strong>Contrato PJ que venceu</strong>
+      <div class="pain__cell">
+        <h3>Contrato PJ que venceu</h3>
         <p>Ninguém foi avisado. A descoberta acontece na hora errada, com pressa.</p>
       </div>
-      <div class="pain__item">
-        <strong>CPF e PIX soltos</strong>
+      <div class="pain__cell">
+        <h3>CPF e PIX soltos</h3>
         <p>Dado pessoal em planilha compartilhada, sem criptografia e sem registro de acesso.</p>
       </div>
     </div>
@@ -139,178 +139,191 @@
 </section>
 
 <!-- ─── MÓDULOS ─────────────────────────────────────────────── -->
-<section id="modulos">
+<section id="modulos" class="section section--white">
   <div class="wrap">
-    <div class="section-head section-head--center reveal">
-      <span class="eyebrow">Módulos</span>
-      <h2>Seis fluxos que hoje vivem espalhados — reunidos numa plataforma só.</h2>
-      <p class="lead">Cada módulo funciona sozinho, mas o valor está em usá-los juntos: o mesmo cadastro de colaborador alimenta o reembolso, a nota fiscal, a viagem e o contrato.</p>
+    <div class="head-2col">
+      <div>
+        <p class="eyebrow">Módulos</p>
+        <h2 class="h2">Seis fluxos que hoje vivem espalhados — reunidos numa plataforma só.</h2>
+      </div>
+      <p class="support">Cada módulo funciona sozinho. Abra um para ver o que ele resolve.</p>
     </div>
 
-    <div class="cards">
-
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h12l4 4v14H4z"/><path d="M16 3v4h4"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+    <div class="acc" data-acc>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-1">
+          <span class="acc__name">Reembolsos</span>
+          <span class="acc__sum">Do comprovante fotografado ao pagamento conciliado, com status visível para os dois lados.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-1">
+          <ul>
+            <li>Envio de até 20 comprovantes de uma vez</li>
+            <li>Categoria, valor, data e estabelecimento preenchidos pela IA</li>
+            <li>Fluxo pendente → aprovado → pago, com histórico</li>
+            <li>Lote de pagamento com PDF pronto para a contabilidade</li>
+          </ul>
         </div>
-        <h3>Reembolsos</h3>
-        <p>Do comprovante fotografado ao pagamento conciliado, com status visível para os dois lados.</p>
-        <ul class="card__list">
-          <li>Envio de até 20 comprovantes de uma vez</li>
-          <li>Categoria, valor, data e estabelecimento preenchidos pela IA</li>
-          <li>Fluxo pendente → aprovado → pago, com histórico</li>
-          <li>Lote de pagamento com PDF pronto para a contabilidade</li>
-        </ul>
-      </article>
+      </div>
 
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10"/><path d="M7 13h6"/><path d="M15 17h2"/></svg>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-2">
+          <span class="acc__name">Notas fiscais</span>
+          <span class="acc__sum">O prestador PJ sobe a NF, o sistema guarda o arquivo e todos os dados fiscais.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-2">
+          <ul>
+            <li>CNPJ, razão social, número e data da nota</li>
+            <li>Data de vencimento e nota interna do financeiro</li>
+            <li>Status recebida / rejeitada / paga</li>
+            <li>Ações em lote para fechar o mês inteiro</li>
+          </ul>
         </div>
-        <h3>Notas fiscais</h3>
-        <p>O prestador PJ sobe a NF, o sistema guarda o arquivo e todos os dados fiscais.</p>
-        <ul class="card__list">
-          <li>CNPJ, razão social, número e data da nota</li>
-          <li>Data de vencimento e nota interna do financeiro</li>
-          <li>Status recebida / rejeitada / paga</li>
-          <li>Ações em lote para fechar o mês inteiro</li>
-        </ul>
-      </article>
+      </div>
 
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l20-6-6 12-3-5-5-1z"/><path d="M8 21l3-4"/></svg>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-3">
+          <span class="acc__name">Viagens</span>
+          <span class="acc__sum">Pedido de passagem e evento sem trocar dez mensagens até chegar num voo.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-3">
+          <ul>
+            <li>Formulário com origem, destino, datas e preferências</li>
+            <li>Busca de opções de voo e envio por e-mail</li>
+            <li>Marcação de "comprada" com anexo da confirmação</li>
+            <li>Histórico de todas as viagens por pessoa</li>
+          </ul>
         </div>
-        <h3>Viagens</h3>
-        <p>Pedido de passagem e evento sem trocar dez mensagens até chegar num voo.</p>
-        <ul class="card__list">
-          <li>Formulário com origem, destino, datas e preferências</li>
-          <li>Busca de opções de voo e envio por e-mail</li>
-          <li>Marcação de "comprada" com anexo da confirmação</li>
-          <li>Histórico de todas as viagens por pessoa</li>
-        </ul>
-      </article>
+      </div>
 
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-4">
+          <span class="acc__name">Colaboradores</span>
+          <span class="acc__sum">Um cadastro único que substitui a pasta de PDFs e a planilha de dados pessoais.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-4">
+          <ul>
+            <li>Dados pessoais, contato, empresa, squad e gestor</li>
+            <li>Dados PJ: razão social, CNPJ e chaves PIX</li>
+            <li>Cada pessoa completa e mantém o próprio perfil</li>
+          </ul>
         </div>
-        <h3>Colaboradores</h3>
-        <p>Um cadastro único que substitui a pasta de PDFs e a planilha de dados pessoais.</p>
-        <ul class="card__list">
-          <li>Dados pessoais, contato, empresa, squad e gestor</li>
-          <li>Dados PJ: razão social, CNPJ e chaves PIX</li>
-          <li>Formação, contato de emergência, tamanho de camiseta</li>
-          <li>Barra de completude do perfil por pessoa</li>
-        </ul>
-      </article>
+      </div>
 
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-5">
+          <span class="acc__name">Contratos</span>
+          <span class="acc__sum">A vigência de cada contrato PJ com medidor visual — o vencimento nunca chega de surpresa.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-5">
+          <ul>
+            <li>Painel dividido em vencidos, 15 dias, 60 dias e em dia</li>
+            <li>Medidor de vigência por colaborador</li>
+          </ul>
         </div>
-        <h3>Contratos</h3>
-        <p>A vigência de cada contrato PJ com medidor visual — o vencimento nunca chega de surpresa.</p>
-        <ul class="card__list">
-          <li>Painel dividido em vencidos, 15 dias, 60 dias e em dia</li>
-          <li>Medidor de vigência por colaborador</li>
-          <li>Filtro por squad e por gestor</li>
-          <li>Base para renovar antes do prazo, não depois</li>
-        </ul>
-      </article>
+      </div>
 
-      <article class="card reveal">
-        <div class="card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="m-6">
+          <span class="acc__name">Onboarding</span>
+          <span class="acc__sum">Uma página de boas-vindas que responde o que todo colaborador novo pergunta.</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="m-6">
+          <ul>
+            <li>Benefícios, regras de pagamento e prazos</li>
+            <li>O que é reembolsável e o que não é</li>
+            <li>Como funciona uma viagem a trabalho</li>
+          </ul>
         </div>
-        <h3>Onboarding</h3>
-        <p>Uma página de boas-vindas que responde o que todo colaborador novo pergunta.</p>
-        <ul class="card__list">
-          <li>Benefícios, regras de pagamento e prazos</li>
-          <li>O que é reembolsável e o que não é</li>
-          <li>Como funciona uma viagem a trabalho</li>
-          <li>Guia passo a passo, em abas navegáveis</li>
-        </ul>
-      </article>
-
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ─── GESTÃO ──────────────────────────────────────────────── -->
-<section id="gestao" style="background:#fff;border-top:1px solid var(--slate-200);border-bottom:1px solid var(--slate-200)">
-  <div class="wrap split">
-    <div class="reveal">
-      <span class="eyebrow">Painel de gestão</span>
-      <h2 style="margin:16px 0 14px">O mês fecha em minutos, não em dias.</h2>
-      <p class="lead">O 49Pay foi desenhado a partir da mesa do financeiro. Tudo que era conferência manual virou seleção, aprovação e exportação.</p>
-      <ul class="feat-list">
-        <li>
-          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <div><strong>Aprovação em lote</strong><p>Selecione dezenas de reembolsos ou notas fiscais e aprove, rejeite ou marque como pagos de uma vez.</p></div>
-        </li>
-        <li>
-          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <div><strong>PDF do lote de pagamento</strong><p>Cada lote gera um documento com colaborador, descrição, categoria e valor — pronto para o banco e para a contabilidade.</p></div>
-        </li>
-        <li>
-          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <div><strong>Relatório mensal automático</strong><p>No começo de cada mês, o consolidado de reembolsos e notas do mês anterior chega por e-mail sem ninguém pedir.</p></div>
-        </li>
-        <li>
-          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <div><strong>Notificações para o colaborador</strong><p>Aprovou, rejeitou, pagou: a pessoa é avisada dentro da plataforma. Acaba o "e aí, saiu meu reembolso?".</p></div>
-        </li>
-        <li>
-          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <div><strong>Histórico e backup</strong><p>Cada solicitação guarda quem fez o quê e quando. A base inteira pode ser exportada e restaurada pelo administrador.</p></div>
-        </li>
-      </ul>
-    </div>
-
-    <div class="split__visual reveal" aria-hidden="true">
-      <div class="panel" style="margin-bottom:20px">
-        <div class="panel__head">
-          <strong>Reembolsos · a aprovar</strong>
-          <span class="mock__btn">Gerar PDF do lote</span>
-        </div>
-        <div class="panel__body">
-          <div class="prow sel">
-            <span class="prow__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-            <span class="prow__main"><strong>Marina Alves · Deslocamento</strong><span>12/08 · Uber para visita a cliente</span></span>
-            <span class="prow__val">R$ 48,90</span>
+<section id="gestao" class="section">
+  <div class="wrap">
+    <div class="gestao">
+      <div>
+        <p class="eyebrow">Painel de gestão</p>
+        <h2 class="h2">O mês fecha em minutos, não em dias.</h2>
+        <p class="support" style="margin-top:20px">O 49Pay foi desenhado a partir da mesa do financeiro. Tudo que era conferência manual virou seleção, aprovação e exportação.</p>
+        <div class="blocks">
+          <div class="block">
+            <h3>Aprovação em lote</h3>
+            <p>Selecione dezenas de reembolsos ou notas fiscais e aprove, rejeite ou marque como pagos de uma vez.</p>
           </div>
-          <div class="prow sel">
-            <span class="prow__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-            <span class="prow__main"><strong>Camila Prado · Alimentação</strong><span>14/08 · Almoço com fornecedor</span></span>
-            <span class="prow__val">R$ 132,00</span>
+          <div class="block">
+            <h3>PDF do lote de pagamento</h3>
+            <p>Cada lote gera um documento com colaborador, descrição, categoria e valor — pronto para o banco e para a contabilidade.</p>
           </div>
-          <div class="prow">
-            <span class="prow__check"></span>
-            <span class="prow__main"><strong>Rafael Souza · Materiais</strong><span>18/08 · Insumos para evento</span></span>
-            <span class="prow__val">R$ 289,40</span>
+          <div class="block">
+            <h3>Relatório mensal automático</h3>
+            <p>No começo de cada mês, o consolidado de reembolsos e notas do mês anterior chega por e-mail sem ninguém pedir.</p>
+          </div>
+          <div class="block">
+            <h3>Notificações para o colaborador</h3>
+            <p>Aprovou, rejeitou, pagou: a pessoa é avisada dentro da plataforma. Acaba o "e aí, saiu meu reembolso?".</p>
+          </div>
+          <div class="block">
+            <h3>Histórico e backup</h3>
+            <p>Cada solicitação guarda quem fez o quê e quando. A base inteira pode ser exportada e restaurada pelo administrador.</p>
           </div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel__head"><strong>Contratos · vigência</strong><span class="pill pill--amber">3 vencendo</span></div>
-        <div class="panel__body meter">
-          <div class="meter__row">
-            <span class="meter__name">João Bernardes</span><span class="pill pill--red">Vencido há 6d</span>
-            <span class="meter__bar"><span class="meter__fill" style="width:100%;background:#DC2626"></span></span>
+      <div class="sticky-col" aria-hidden="true">
+        <div class="pcard">
+          <div class="pcard__head">
+            <h3>Reembolsos · a aprovar</h3>
+            <span class="mock__btn">Gerar PDF do lote</span>
           </div>
-          <div class="meter__row">
-            <span class="meter__name">Marina Alves</span><span class="pill pill--amber">11 dias</span>
-            <span class="meter__bar"><span class="meter__fill" style="width:88%;background:#D97706"></span></span>
+          <div class="pcard__body">
+            <div class="prow">
+              <span class="prow__box on"></span>
+              <span class="prow__main"><strong>Marina Alves · Deslocamento</strong><span>12/08 · Uber para visita a cliente</span></span>
+              <span class="prow__val num">R$ 48,90</span>
+            </div>
+            <div class="prow">
+              <span class="prow__box on"></span>
+              <span class="prow__main"><strong>Camila Prado · Alimentação</strong><span>14/08 · Almoço com fornecedor</span></span>
+              <span class="prow__val num">R$ 132,00</span>
+            </div>
+            <div class="prow">
+              <span class="prow__box"></span>
+              <span class="prow__main"><strong>Rafael Souza · Materiais</strong><span>18/08 · Insumos para evento</span></span>
+              <span class="prow__val num">R$ 289,40</span>
+            </div>
           </div>
-          <div class="meter__row">
-            <span class="meter__name">Camila Prado</span><span class="pill pill--blue">47 dias</span>
-            <span class="meter__bar"><span class="meter__fill" style="width:62%;background:#2563EB"></span></span>
+        </div>
+
+        <div class="pcard">
+          <div class="pcard__head">
+            <h3>Contratos · vigência</h3>
+            <span class="pcard__badge">3 vencendo</span>
           </div>
-          <div class="meter__row">
-            <span class="meter__name">Rafael Souza</span><span class="pill pill--green">203 dias</span>
-            <span class="meter__bar"><span class="meter__fill" style="width:31%;background:#16A34A"></span></span>
+          <div class="pcard__body">
+            <div class="meter">
+              <div class="meter__top"><span class="meter__name">João Bernardes</span><span class="meter__time">vencido há 6d</span></div>
+              <div class="meter__bar"><div class="meter__fill" style="width:100%;background:#A34A38"></div></div>
+            </div>
+            <div class="meter">
+              <div class="meter__top"><span class="meter__name">Marina Alves</span><span class="meter__time">11 dias</span></div>
+              <div class="meter__bar"><div class="meter__fill" style="width:82%;background:#C9922F"></div></div>
+            </div>
+            <div class="meter">
+              <div class="meter__top"><span class="meter__name">Camila Prado</span><span class="meter__time">47 dias</span></div>
+              <div class="meter__bar"><div class="meter__fill" style="width:48%;background:#B4B8BE"></div></div>
+            </div>
+            <div class="meter">
+              <div class="meter__top"><span class="meter__name">Rafael Souza</span><span class="meter__time">203 dias</span></div>
+              <div class="meter__bar"><div class="meter__fill" style="width:16%;background:#3F7A55"></div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -318,77 +331,68 @@
   </div>
 </section>
 
-<!-- ─── IA ──────────────────────────────────────────────────── -->
-<section class="ai" id="ia">
-  <div class="wrap ai__grid">
-    <div class="reveal">
-      <span class="eyebrow">Automação com IA</span>
-      <h2 style="margin:16px 0 14px">Tirou a foto, o 49Pay preenche o resto.</h2>
-      <p class="lead">O maior atrito do reembolso nunca foi a aprovação — era digitar. O colaborador envia a imagem do comprovante e a plataforma extrai os dados sozinha.</p>
-      <ul class="ai__steps">
-        <li><span class="n">1</span><span>A pessoa seleciona até 20 comprovantes de uma vez, direto do celular.</span></li>
-        <li><span class="n">2</span><span>A IA lê cada imagem e devolve valor, data, estabelecimento e categoria sugerida.</span></li>
-        <li><span class="n">3</span><span>Ela confere, ajusta o que quiser e envia. O financeiro recebe já estruturado.</span></li>
-      </ul>
-      <p class="tiny" style="margin-top:24px;color:rgb(148 163 184 / .9)">Os arquivos passam por validação de tipo real e limite de tamanho antes de qualquer processamento.</p>
-    </div>
+<!-- ─── AUTOMAÇÃO ───────────────────────────────────────────── -->
+<section id="automacao" class="dark">
+  <div class="wrap">
+    <div class="ia">
+      <div>
+        <p class="eyebrow">Automação com IA</p>
+        <h2 class="h2">Tirou a foto, o 49Pay preenche o resto.</h2>
+        <p class="ia__lead">O maior atrito do reembolso nunca foi a aprovação — era digitar. O colaborador envia a imagem do comprovante e a plataforma extrai os dados sozinha.</p>
+        <ol class="ia__steps">
+          <li><b>01</b><span>A pessoa seleciona até 20 comprovantes de uma vez, direto do celular.</span></li>
+          <li><b>02</b><span>A IA lê cada imagem e devolve valor, data, estabelecimento e categoria sugerida.</span></li>
+          <li><b>03</b><span>Ela confere, ajusta o que quiser e envia. O financeiro recebe já estruturado.</span></li>
+        </ol>
+        <p class="ia__note">Os arquivos passam por validação de tipo real e limite de tamanho antes de qualquer processamento.</p>
+      </div>
 
-    <div class="scan reveal" aria-hidden="true">
-      <div class="scan__file">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-        <span>comprovante-uber-12ago.jpg · lido em 1,4s</span>
+      <div class="scan" aria-hidden="true">
+        <div class="scan__file">comprovante-uber-12ago.jpg · lido em 1,4s</div>
+        <div class="scan__fields">
+          <div class="scan__f"><b>Valor</b><span class="num">R$ 48,90</span></div>
+          <div class="scan__f"><b>Data</b><span class="num">12/08/2026</span></div>
+          <div class="scan__f"><b>Estabelecimento</b><span>Uber do Brasil</span></div>
+          <div class="scan__f"><b>Categoria</b><span>Deslocamento</span></div>
+        </div>
+        <p class="scan__cap">Preenchido automaticamente — editável antes de enviar</p>
       </div>
-      <div class="scan__fields">
-        <div class="scan__f"><b>Valor</b><span>R$ 48,90</span></div>
-        <div class="scan__f"><b>Data</b><span>12/08/2026</span></div>
-        <div class="scan__f"><b>Estabelecimento</b><span>Uber do Brasil</span></div>
-        <div class="scan__f"><b>Categoria</b><span>Deslocamento</span></div>
-      </div>
-      <span class="scan__tag">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.6L20 10l-5 3.8L16.5 20 12 16.8 7.5 20 9 13.8 4 10l5.8-1.4z"/></svg>
-        Preenchido automaticamente — editável antes de enviar
-      </span>
     </div>
   </div>
 </section>
 
 <!-- ─── SEGURANÇA ───────────────────────────────────────────── -->
-<section id="seguranca">
+<section id="seguranca" class="section section--white">
   <div class="wrap">
-    <div class="section-head section-head--center reveal">
-      <span class="eyebrow">Segurança e LGPD</span>
-      <h2>Dado pessoal tratado como dado pessoal.</h2>
-      <p class="lead">CPF, CNPJ e chave PIX de todo o time num só sistema exigem mais do que um login. A proteção é parte da arquitetura, não um item de checklist.</p>
+    <div class="head-2col">
+      <div>
+        <p class="eyebrow">Segurança e LGPD</p>
+        <h2 class="h2">Dado pessoal tratado como dado pessoal.</h2>
+      </div>
+      <p class="support">CPF, CNPJ e chave PIX de todo o time num só sistema exigem mais do que um login. A proteção é parte da arquitetura, não um item de checklist.</p>
     </div>
-
-    <div class="sec-grid">
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="sec">
+      <div class="sec__item">
         <h3>Criptografia em repouso</h3>
         <p>CPF, CNPJ e chaves PIX são gravados com AES-256-GCM. No banco, nem o arquivo bruto revela o dado.</p>
       </div>
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><path d="M4 4l16 16"/></svg></div>
+      <div class="sec__item">
         <h3>Mascaramento nas telas</h3>
-        <p>O painel mostra <code>***.456.***-**</code> por padrão. O dado completo só aparece quando alguém pede — e isso fica registrado.</p>
+        <p>O painel mostra ***.456.***-** por padrão. O dado completo só aparece quando alguém pede — e isso fica registrado.</p>
       </div>
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h12l4 4v14H4z"/><path d="M8 12h8M8 16h8M8 8h3"/></svg></div>
+      <div class="sec__item">
         <h3>Log de auditoria</h3>
         <p>Toda visualização de dado pessoal, download de arquivo, edição de cadastro e reset de senha entra na trilha de auditoria.</p>
       </div>
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></div>
+      <div class="sec__item">
         <h3>Acesso por e-mail autorizado</h3>
         <p>Só entra quem está na lista da empresa. Sessão assinada, com separação clara entre colaborador e administrador.</p>
       </div>
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <div class="sec__item">
         <h3>Rate limit por usuário</h3>
         <p>Envio, login e leitura por IA têm limite por pessoa e por hora — protege contra abuso e contra custo inesperado.</p>
       </div>
-      <div class="sec reveal">
-        <div class="sec__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div>
+      <div class="sec__item">
         <h3>Validação real de arquivos</h3>
         <p>O tipo do arquivo é conferido pelos bytes, não pela extensão. Nada entra se ninguém garantiu o que é.</p>
       </div>
@@ -396,160 +400,175 @@
   </div>
 </section>
 
-<!-- ─── COMO FUNCIONA ───────────────────────────────────────── -->
-<section id="como-funciona" style="background:#fff;border-top:1px solid var(--slate-200);border-bottom:1px solid var(--slate-200)">
+<!-- ─── IMPLANTAÇÃO ─────────────────────────────────────────── -->
+<section id="implantacao" class="section">
   <div class="wrap">
-    <div class="section-head section-head--center reveal">
-      <span class="eyebrow">Implantação</span>
-      <h2>Do primeiro contato ao time usando: uma semana.</h2>
-    </div>
+    <p class="eyebrow">Implantação</p>
+    <h2 class="h2" style="margin-bottom:56px">Do primeiro contato ao time usando: uma semana.</h2>
     <div class="steps">
-      <div class="step reveal">
-        <div class="step__n">Passo 1</div>
+      <div class="step">
+        <p class="step__n">PASSO 1</p>
         <h3>Configuramos com a sua cara</h3>
         <p>Marca, cores, domínio próprio e a lista de e-mails corporativos que podem acessar. Você escolhe quais módulos entram agora.</p>
       </div>
-      <div class="step reveal">
-        <div class="step__n">Passo 2</div>
+      <div class="step">
+        <p class="step__n">PASSO 2</p>
         <h3>Importamos o seu time</h3>
         <p>Cadastro dos colaboradores, dados PJ, contratos e vigências. Cada pessoa recebe o acesso e completa o próprio perfil.</p>
       </div>
-      <div class="step reveal">
-        <div class="step__n">Passo 3</div>
+      <div class="step">
+        <p class="step__n">PASSO 3</p>
         <h3>O time usa, o financeiro fecha</h3>
         <p>As solicitações chegam estruturadas. O primeiro fechamento em lote acontece já no mês seguinte — com PDF e relatório automático.</p>
       </div>
     </div>
-    <p class="muted reveal" style="margin-top:32px;text-align:center">
-      Construído em Next.js 15 e React 19. Roda em nuvem gerenciada com domínio próprio, ou na infraestrutura da sua empresa.
-    </p>
+    <p class="steps-note">Construído em Next.js 15 e React 19. Roda em nuvem gerenciada com domínio próprio, ou na infraestrutura da sua empresa.</p>
   </div>
 </section>
 
 <!-- ─── PLANOS ──────────────────────────────────────────────── -->
-<section id="planos">
+<section id="planos" class="section section--white">
   <div class="wrap">
-    <div class="section-head section-head--center reveal">
-      <span class="eyebrow">Planos</span>
-      <h2>Preço por empresa, não por dor de cabeça.</h2>
-      <p class="lead">Escolha os módulos que fazem sentido agora e ative o resto quando quiser.</p>
+    <div class="head-2col">
+      <div>
+        <p class="eyebrow">Planos</p>
+        <h2 class="h2">Preço por empresa, não por dor de cabeça.</h2>
+      </div>
+      <p class="support">Escolha os módulos que fazem sentido agora e ative o resto quando quiser.</p>
     </div>
-
     <div class="plans">
-      <div class="plan reveal">
-        <h3>Essencial</h3>
+      <div class="plan">
+        <div class="plan__top"><span class="plan__name">Essencial</span></div>
         <p class="plan__desc">Para quem quer sair da planilha de reembolso ainda este mês.</p>
-        <div class="plan__price">Sob consulta <small>/ mês</small></div>
+        <p class="plan__price">Sob consulta <small>/ mês</small></p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Módulos de reembolso e nota fiscal</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Aprovação em lote e PDF de pagamento</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Notificações para o colaborador</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Suporte por e-mail</li>
+          <li>Módulos de reembolso e nota fiscal</li>
+          <li>Aprovação em lote e PDF de pagamento</li>
+          <li>Notificações para o colaborador</li>
+          <li>Suporte por e-mail</li>
         </ul>
-        <a class="btn btn--ghost" href="#contato">Falar com a gente</a>
+        <a href="#contato" class="btn btn--line">Falar com a gente</a>
       </div>
 
-      <div class="plan plan--hl reveal">
-        <span class="plan__tag">Mais escolhido</span>
-        <h3>Completo</h3>
+      <div class="plan plan--hl">
+        <div class="plan__top"><span class="plan__name">Completo</span><span class="plan__tag">Mais escolhido</span></div>
         <p class="plan__desc">A plataforma inteira: financeiro, pessoas e contratos integrados.</p>
-        <div class="plan__price">Sob consulta <small>/ mês</small></div>
+        <p class="plan__price">Sob consulta <small>/ mês</small></p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Todos os seis módulos</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Leitura de comprovantes por IA</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Relatório mensal automático</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Log de auditoria e criptografia de PII</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Domínio e identidade visual próprios</li>
+          <li>Todos os seis módulos</li>
+          <li>Leitura de comprovantes por IA</li>
+          <li>Relatório mensal automático</li>
+          <li>Log de auditoria e criptografia de PII</li>
+          <li>Domínio e identidade visual próprios</li>
         </ul>
-        <a class="btn btn--primary" href="#contato">Agendar demonstração</a>
+        <a href="#contato" class="btn btn--solid">Agendar demonstração</a>
       </div>
 
-      <div class="plan reveal">
-        <h3>Corporativo</h3>
+      <div class="plan">
+        <div class="plan__top"><span class="plan__name">Corporativo</span></div>
         <p class="plan__desc">Para operações maiores, com exigências próprias de segurança.</p>
-        <div class="plan__price">Sob consulta</div>
+        <p class="plan__price">Sob consulta</p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Tudo do plano Completo</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Instalação na infraestrutura da empresa</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Integrações e campos sob medida</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Onboarding acompanhado do time</li>
+          <li>Tudo do plano Completo</li>
+          <li>Instalação na infraestrutura da empresa</li>
+          <li>Integrações e campos sob medida</li>
+          <li>Onboarding acompanhado do time</li>
         </ul>
-        <a class="btn btn--ghost" href="#contato">Conversar sobre o escopo</a>
+        <a href="#contato" class="btn btn--line">Conversar sobre o escopo</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── FAQ ─────────────────────────────────────────────────── -->
-<section id="faq" style="background:#fff;border-top:1px solid var(--slate-200)">
-  <div class="wrap">
-    <div class="section-head section-head--center reveal">
-      <span class="eyebrow">Dúvidas</span>
-      <h2>Perguntas que sempre aparecem.</h2>
-    </div>
-    <div class="faq reveal">
-      <details open>
-        <summary>Precisa trocar o sistema que a gente já usa?</summary>
-        <p>Não. O 49Pay cobre o que costuma ficar de fora do ERP: o pedido do colaborador, a aprovação e a organização do que vai para o pagamento. O lote sai em PDF, pronto para seguir no fluxo que você já tem.</p>
-      </details>
-      <details>
-        <summary>Dá para usar só um módulo?</summary>
-        <p>Dá. A maioria começa por reembolso ou nota fiscal, que é onde a dor aparece primeiro, e ativa os outros depois. O cadastro de colaboradores é compartilhado, então nada precisa ser refeito quando um módulo novo entra.</p>
-      </details>
-      <details>
-        <summary>Como fica a LGPD?</summary>
-        <p>CPF, CNPJ e chaves PIX são criptografados em repouso e exibidos mascarados no painel. Toda visualização de dado pessoal, download de arquivo e edição de cadastro fica registrada na trilha de auditoria, com autor e horário.</p>
-      </details>
-      <details>
-        <summary>O colaborador precisa instalar alguma coisa?</summary>
-        <p>Não. É uma aplicação web, feita para funcionar bem no celular. A pessoa entra com o e-mail corporativo, fotografa o comprovante e envia.</p>
-      </details>
-      <details>
-        <summary>A leitura por IA é confiável?</summary>
-        <p>Ela preenche, mas quem confirma é a pessoa. Todo campo lido pode ser corrigido antes do envio, e o comprovante original fica anexado à solicitação para conferência do financeiro.</p>
-      </details>
-      <details>
-        <summary>Quem hospeda os dados?</summary>
-        <p>No plano padrão, em nuvem gerenciada com domínio próprio da sua empresa. No plano corporativo, a instalação pode acontecer na infraestrutura que você já usa.</p>
-      </details>
+<!-- ─── DÚVIDAS ─────────────────────────────────────────────── -->
+<section id="duvidas" class="section">
+  <div class="wrap faq">
+    <p class="eyebrow">Dúvidas</p>
+    <h2 class="h2" style="margin-bottom:48px">Perguntas que sempre aparecem.</h2>
+    <div class="acc" data-acc>
+      <div class="acc__item open">
+        <button class="acc__btn" aria-expanded="true" aria-controls="f-1">
+          <span class="acc__q">Precisa trocar o sistema que a gente já usa?</span>
+          <span class="acc__sign" aria-hidden="true">−</span>
+        </button>
+        <div class="acc__panel" id="f-1">Não. O 49Pay cobre o que costuma ficar de fora do ERP: o pedido do colaborador, a aprovação e a organização do que vai para o pagamento. O lote sai em PDF, pronto para seguir no fluxo que você já tem.</div>
+      </div>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="f-2">
+          <span class="acc__q">Dá para usar só um módulo?</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="f-2">Dá. Cada módulo funciona sozinho. Você escolhe quais entram agora na configuração inicial e ativa o resto quando fizer sentido.</div>
+      </div>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="f-3">
+          <span class="acc__q">Como fica a LGPD?</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="f-3">CPF, CNPJ e chaves PIX ficam criptografados em repouso e aparecem mascarados nas telas. Toda visualização, download ou edição de dado pessoal entra na trilha de auditoria.</div>
+      </div>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="f-4">
+          <span class="acc__q">O colaborador precisa instalar alguma coisa?</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="f-4">Não. Tudo acontece no navegador do celular, com o e-mail corporativo. A pessoa fotografa o comprovante e envia pela própria plataforma.</div>
+      </div>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="f-5">
+          <span class="acc__q">A leitura por IA é confiável?</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="f-5">A IA sugere valor, data, estabelecimento e categoria — e o colaborador confere e ajusta antes de enviar. Nada é submetido sem passar pelos olhos de alguém.</div>
+      </div>
+      <div class="acc__item">
+        <button class="acc__btn" aria-expanded="false" aria-controls="f-6">
+          <span class="acc__q">Quem hospeda os dados?</span>
+          <span class="acc__sign" aria-hidden="true">+</span>
+        </button>
+        <div class="acc__panel" id="f-6">Você escolhe: nuvem gerenciada por nós com domínio próprio, ou instalação na infraestrutura da sua empresa, no plano Corporativo.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ─── CTA ─────────────────────────────────────────────────── -->
-<section class="cta" id="contato">
-  <div class="wrap cta__inner reveal">
-    <h2>Quer ver o 49Pay rodando com os dados da sua empresa?</h2>
-    <p>Uma demonstração de 30 minutos é suficiente para entender se faz sentido. Sem compromisso e sem apresentação de slides — a gente abre a plataforma.</p>
-    <div class="cta__actions">
-      <a class="btn btn--light" href="mailto:luana.costa@49educacao.com.br?subject=Quero%20conhecer%20o%2049Pay&amp;body=Oi!%20Trabalho%20na%20empresa%20___%20e%20gostaria%20de%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20do%2049Pay.">Agendar demonstração</a>
-      <a class="btn btn--outline-light" href="/login">Entrar na plataforma</a>
+<!-- ─── CONTATO ─────────────────────────────────────────────── -->
+<section id="contato" class="dark cta">
+  <div class="wrap">
+    <div class="cta__grid">
+      <div>
+        <h2 class="h2">Quer ver o 49Pay rodando com os dados da sua empresa?</h2>
+        <p class="cta__lead">Uma demonstração de 30 minutos é suficiente para entender se faz sentido. Sem compromisso e sem apresentação de slides — a gente abre a plataforma.</p>
+      </div>
+      <div class="cta__actions">
+        <a class="btn btn--solid" href="mailto:luana.costa@49educacao.com.br?subject=Quero%20conhecer%20o%2049Pay&amp;body=Oi!%20Trabalho%20na%20empresa%20___%20e%20gostaria%20de%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20do%2049Pay.">Agendar demonstração</a>
+        <a class="btn btn--dark-line" href="/login">Entrar na plataforma</a>
+        <a class="cta__mail" href="mailto:luana.costa@49educacao.com.br">luana.costa@49educacao.com.br</a>
+      </div>
     </div>
-    <p class="tiny" style="color:rgb(255 255 255 / .75);margin-top:20px">luana.costa@49educacao.com.br</p>
   </div>
 </section>
+
 </main>
 
-<!-- ─── FOOTER ──────────────────────────────────────────────── -->
 <footer class="footer">
-  <div class="wrap footer__inner">
-    <div class="brand" style="font-size:.9375rem">
-      <img src="/logo-49.svg" alt="" width="28" height="28">
-      49Pay
-    </div>
-    <nav class="footer__links">
+  <div class="wrap footer__inner" style="padding-left:0;padding-right:0">
+    <a href="#topo" class="brand">
+      <img class="brand__mark" src="/logo-49.svg" alt="" width="26" height="26">
+      <span class="brand__name">49Pay</span>
+    </a>
+    <nav class="footer__nav">
       <a href="#modulos">Módulos</a>
       <a href="#gestao">Gestão</a>
       <a href="#seguranca">Segurança</a>
       <a href="#planos">Planos</a>
-      <a href="#faq">Dúvidas</a>
+      <a href="#duvidas">Dúvidas</a>
       <a href="#contato">Contato</a>
     </nav>
-    <p class="tiny">© 2026 49 Educação · 49Pay</p>
+    <p class="footer__copy">© 2026 49 Educação · 49Pay</p>
   </div>
 </footer>
 
-<script src="/conheca/reveal.js" defer></script>
-
+<script src="/conheca/app.js" defer></script>
 </body>
 </html>
