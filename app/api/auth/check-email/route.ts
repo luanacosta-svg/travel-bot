@@ -12,11 +12,12 @@ export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email")?.toLowerCase().trim();
   if (!email) return NextResponse.json({ exists: false });
 
-  if (!ALLOWED_EMAILS.has(email)) {
+  const emp = getEmployeeByEmail(email);
+
+  // Autorizado se está na allowlist OU se foi cadastrado como colaborador pelo admin
+  if (!emp && !ALLOWED_EMAILS.has(email)) {
     return NextResponse.json({ exists: false });
   }
-
-  const emp = getEmployeeByEmail(email);
 
   if (!emp) {
     const displayName = email

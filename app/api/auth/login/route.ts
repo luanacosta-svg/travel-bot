@@ -29,14 +29,15 @@ export async function POST(req: NextRequest) {
 
   const cleanEmail = email.trim().toLowerCase();
 
-  if (!ALLOWED_EMAILS.has(cleanEmail)) {
+  let employee = getEmployeeByEmail(cleanEmail);
+
+  // Autorizado se está na allowlist OU se foi cadastrado como colaborador pelo admin
+  if (!employee && !ALLOWED_EMAILS.has(cleanEmail)) {
     return NextResponse.json(
       { error: "E-mail não autorizado. Fale com o RH." },
       { status: 401 }
     );
   }
-
-  let employee = getEmployeeByEmail(cleanEmail);
 
   // Primeiro acesso: cria registro mínimo automaticamente
   if (!employee) {
