@@ -23,27 +23,13 @@
     });
   });
 
-  /* ── Barra de progresso + seção ativa na trilha ───────────── */
-  var fill     = document.querySelector(".progress__fill");
-  var railLinks = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
-  var sections  = railLinks.map(function (a) {
-    return { link: a, el: document.getElementById(a.getAttribute("href").slice(1)) };
-  }).filter(function (s) { return s.el; });
-
+  /* ── Barra de progresso de leitura ────────────────────────── */
+  var fill = document.querySelector(".progress__fill");
   var ticking = false;
   function update() {
     ticking = false;
-    var doc = document.documentElement;
-    var max = doc.scrollHeight - window.innerHeight;
+    var max = document.documentElement.scrollHeight - window.innerHeight;
     fill.style.width = (max > 0 ? Math.min(1, window.scrollY / max) * 100 : 0).toFixed(2) + "%";
-
-    var active = sections.length ? sections[0] : null;
-    sections.forEach(function (s) {
-      if (s.el.getBoundingClientRect().top <= window.innerHeight * 0.35) active = s;
-    });
-    sections.forEach(function (s) {
-      s.link.setAttribute("aria-current", s === active ? "true" : "false");
-    });
   }
   function onScroll() {
     if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
