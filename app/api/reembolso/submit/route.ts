@@ -23,8 +23,16 @@ export async function POST(req: NextRequest) {
       let receiptFile: string | undefined;
       const file = formData.get(`file_${i}`) as File | null;
       if (file && file.size > 0) {
-        // sem limite de tamanho individual — aceita qualquer comprovante
-        receiptFile = await saveUploadedFile(file, `reimb-${id}`, Infinity);
+        try {
+          // sem limite de tamanho individual — aceita qualquer comprovante
+          receiptFile = await saveUploadedFile(file, `reimb-${id}`, Infinity);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Arquivo inválido";
+          return NextResponse.json(
+            { error: `Despesa ${i + 1} — comprovante "${file.name}": ${msg}` },
+            { status: 400 }
+          );
+        }
       }
 
       const item: ReimbursementRequest = {

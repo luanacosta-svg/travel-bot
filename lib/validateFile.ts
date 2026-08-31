@@ -35,6 +35,12 @@ export async function detectMagicType(file: File): Promise<string | null> {
   if ((buf[0] === 0x3C && (buf[1] === 0x3F || buf[1] === 0x4E || buf[1] === 0x6E)) ||
       (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF)) return "application/xml";
 
+  // HEIC/HEIF (fotos de iPhone): ....ftypheic / ftypheix / ftypmif1 / ftypheif
+  if (buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) {
+    const brand = String.fromCharCode(buf[8], buf[9], buf[10], buf[11]);
+    if (["heic", "heix", "heif", "mif1", "msf1", "hevc"].includes(brand)) return "image/heic";
+  }
+
   return null;
 }
 

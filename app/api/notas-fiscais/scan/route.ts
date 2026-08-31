@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rateLimit";
 import { decodeSession } from "@/lib/session";
 import { detectMagicType } from "@/lib/validateFile";
+import convertHeic from "heic-convert";
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -46,12 +47,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ data: EMPTY });
     }
 
-    const detectedMime = await detectMagicType(file);
+    let detectedMime = await detectMagicType(file);
 
     // XML: parse direto, sem IA
     if (detectedMime === "application/xml") {
       const text = await file.text();
       return NextResponse.json({ data: parseXml(text) });
+    }
+
+    let buffer = Buffer.from(await file.arrayBuffer());
+
+    // Fotos de iPhone (HEIC): converte para JPEG antes de enviar à IA
+    if (detectedMime === "image/heic") {
+      buffer = Buffer.from(await convertHeic({ buffer, format: "JPEG", quality: 0.85 }));
+      detectedMime = "image/jpeg";
     }
 
     const isPdf = detectedMime === "application/pdf";
@@ -60,7 +69,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ data: EMPTY });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
     const base64 = buffer.toString("base64");
 
     const contentBlock = isPdf

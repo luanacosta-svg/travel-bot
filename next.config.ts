@@ -12,7 +12,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["nodemailer", "amadeus", "@anthropic-ai/sdk"],
+  serverExternalPackages: ["nodemailer", "amadeus", "@anthropic-ai/sdk", "heic-convert"],
   // Landing comercial pública: /conheca serve public/conheca/index.html
   async rewrites() {
     return [
