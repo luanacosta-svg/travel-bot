@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminAuth";
 import { decodeSession } from "@/lib/session";
-import { getEmployee, saveEmployee, deleteEmployee, calcCompletion } from "@/lib/employeeStore";
+import { getEmployee, getEmployeeByEmail, saveEmployee, deleteEmployee, calcCompletion } from "@/lib/employeeStore";
 import { logAudit } from "@/lib/auditLog";
 
 function getAuth(req: NextRequest) {
@@ -58,7 +58,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id: _id, email: _email, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
     rawBody as Record<string, unknown>;
 
-  const updated = { ...emp, ...(safeBody as Partial<typeof emp>), id, email: emp.email, updatedAt: new Date().toISOString() } as typeof emp;
+  // Admin pode corrigir o email (colaborador não pode trocar o próprio)
+  let newEmail = emp.email;
+  if (isAdmin && typeof rawBody.email === "string") {
+    const candidate = rawBody.email.trim().toLowerCase();
+    if (candidate && candidate !== emp.email.toLowerCase()) {
+      const conflict = getEmployeeByEmail(candidate);
+      if (conflict && conflict.id !== id) {
+        return NextResponse.json({ error: "Já existe um colaborador com esse e-mail." }, { status: 409 });
+      }
+      newEmail = candidate;
+      logAudit({ action: "employee_edit", actor: "admin", target: id, detail: `email alterado: ${emp.email} → ${candidate}` });
+    }
+  }
+
+  const updated = { ...emp, ...(safeBody as Partial<typeof emp>), id, email: newEmail, updatedAt: new Date().toISOString() } as typeof emp;
   updated.completion = calcCompletion(updated);
   saveEmployee(updated);
   return NextResponse.json(updated);
