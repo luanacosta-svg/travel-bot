@@ -287,28 +287,15 @@ export default function BemVindoPage() {
               <h2 className="text-2xl font-bold text-slate-800">💳 Como receber seu pagamento</h2>
               <p className="text-slate-500 text-sm mt-1">Entenda as formas de recebimento e o calendário mensal.</p>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 flex gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">🧾</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800">Apenas Nota Fiscal</h3>
-                  <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                    Emita a NF para a 49 Educação com o valor combinado e envie pelo 49Pay.
-                  </p>
-                </div>
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">🧾</span>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 flex gap-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">💜</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800">Nota Fiscal + Caju</h3>
-                  <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                    Se combinado com o time, parte do pagamento pode ser feita via Caju, o benefício flexível.
-                  </p>
-                </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Nota Fiscal</h3>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  Emita a NF para a 49 Educação com o valor combinado e envie pelo 49Pay.
+                </p>
               </div>
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-6">
