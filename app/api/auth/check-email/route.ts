@@ -14,6 +14,11 @@ export async function GET(req: NextRequest) {
 
   const emp = getEmployeeByEmail(email);
 
+  // Desativado: trata como não cadastrado (não entra)
+  if (emp?.inactive) {
+    return NextResponse.json({ exists: false });
+  }
+
   // Autorizado se está na allowlist OU se foi cadastrado como colaborador pelo admin
   if (!emp && !ALLOWED_EMAILS.has(email)) {
     return NextResponse.json({ exists: false });

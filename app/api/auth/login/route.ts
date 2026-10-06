@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
 
   let employee = getEmployeeByEmail(cleanEmail);
 
+  // Colaborador desativado não entra, mesmo que esteja na allowlist
+  if (employee?.inactive) {
+    return NextResponse.json(
+      { error: "Acesso desativado. Fale com o RH." },
+      { status: 401 }
+    );
+  }
+
   // Autorizado se está na allowlist OU se foi cadastrado como colaborador pelo admin
   if (!employee && !ALLOWED_EMAILS.has(cleanEmail)) {
     return NextResponse.json(

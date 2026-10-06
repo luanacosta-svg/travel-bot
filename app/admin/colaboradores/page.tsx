@@ -82,12 +82,16 @@ export default function ColaboradoresPage() {
   }, []);
 
   const filtered = useMemo(() => employees.filter((e) => {
+    // Inativos só aparecem no filtro "Inativos"
+    if (statusFil === "Inativos") { if (!e.inactive) return false; }
+    else if (e.inactive) return false;
+
     if (search) {
       const q = search.toLowerCase();
       if (!e.name.toLowerCase().includes(q) && !e.email.toLowerCase().includes(q)) return false;
     }
     if (squad !== "Todos" && e.squad !== squad) return false;
-    if (statusFil !== "Todos") {
+    if (statusFil !== "Todos" && statusFil !== "Inativos") {
       const key = contractStatusKey(e.contractEnd);
       if (statusFil === "Vencendo" && key !== "vencendo" && key !== "vencido") return false;
       if (statusFil === "Incompleto" && (e.completion ?? 0) >= 100) return false;
@@ -95,23 +99,26 @@ export default function ColaboradoresPage() {
     return true;
   }), [employees, search, squad, statusFil]);
 
-  // Relação de camisetas
+  const ativos = useMemo(() => employees.filter((e) => !e.inactive), [employees]);
+  const inativosCount = employees.length - ativos.length;
+
+  // Relação de camisetas (só ativos)
   const shirtGroups = useMemo(() => {
     const bySize = new Map<string, Employee[]>();
     for (const s of SHIRT_SIZES) bySize.set(s, []);
     const missing: Employee[] = [];
-    for (const e of employees) {
+    for (const e of ativos) {
       if (e.shirtSize && bySize.has(e.shirtSize)) bySize.get(e.shirtSize)!.push(e);
       else missing.push(e);
     }
     return { bySize, missing };
-  }, [employees]);
+  }, [ativos]);
 
-  const total       = employees.length;
-  const vencendo    = employees.filter((e) => ["vencendo","vencido"].includes(contractStatusKey(e.contractEnd))).length;
-  const atencao     = employees.filter((e) => contractStatusKey(e.contractEnd) === "atencao").length;
+  const total       = ativos.length;
+  const vencendo    = ativos.filter((e) => ["vencendo","vencido"].includes(contractStatusKey(e.contractEnd))).length;
+  const atencao     = ativos.filter((e) => contractStatusKey(e.contractEnd) === "atencao").length;
   const emDia       = total - vencendo - atencao;
-  const incompletos = employees.filter((e) => (e.completion ?? 0) < 100).length;
+  const incompletos = ativos.filter((e) => (e.completion ?? 0) < 100).length;
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
@@ -266,7 +273,9 @@ export default function ColaboradoresPage() {
               value={statusFil}
               onChange={(e) => setStatusFil(e.target.value)}
             >
-              {["Todos","Vencendo","Incompleto"].map((s) => <option key={s}>{s}</option>)}
+              {["Todos","Vencendo","Incompleto",`Inativos${inativosCount > 0 ? ` (${inativosCount})` : ""}`].map((s) => (
+                <option key={s} value={s.startsWith("Inativos") ? "Inativos" : s}>{s}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -306,7 +315,10 @@ export default function ColaboradoresPage() {
                             {avatarInitials(e.name)}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-800 text-sm">{e.name}</p>
+                            <p className="font-bold text-slate-800 text-sm">
+                              {e.name}
+                              {e.inactive && <span className="ml-2 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">⛔ Inativo</span>}
+                            </p>
                             <p className="text-xs text-slate-400">{e.email}</p>
                           </div>
                         </div>

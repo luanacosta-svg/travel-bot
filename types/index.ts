@@ -122,6 +122,10 @@ export interface Employee {
   shirtSize?: string;
   linkedin?: string;
 
+  // Desligamento — true bloqueia o login e tira das listas ativas (histórico preservado)
+  inactive?: boolean;
+  inactivatedAt?: string;
+
   // Computed / meta
   completion?: number;
 

@@ -55,8 +55,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // A4: campos protegidos não podem ser sobrescritos via API
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id: _id, email: _email, createdAt: _ca, passwordHash: _ph, completion: _comp, ...safeBody } =
+  const { id: _id, email: _email, createdAt: _ca, passwordHash: _ph, completion: _comp, inactive: _inactive, inactivatedAt: _ia, ...safeBody } =
     rawBody as Record<string, unknown>;
+
+  // Desativar/reativar: somente admin
+  let inactiveFields: Partial<Pick<typeof emp, "inactive" | "inactivatedAt">> = {};
+  if (isAdmin && typeof rawBody.inactive === "boolean" && rawBody.inactive !== !!emp.inactive) {
+    inactiveFields = rawBody.inactive
+      ? { inactive: true, inactivatedAt: new Date().toISOString() }
+      : { inactive: false, inactivatedAt: undefined };
+    logAudit({
+      action: "employee_edit",
+      actor: "admin",
+      target: id,
+      detail: rawBody.inactive ? `colaborador desativado (${emp.email})` : `colaborador reativado (${emp.email})`,
+    });
+  }
 
   // Admin pode corrigir o email (colaborador não pode trocar o próprio)
   let newEmail = emp.email;
@@ -72,7 +86,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  const updated = { ...emp, ...(safeBody as Partial<typeof emp>), id, email: newEmail, updatedAt: new Date().toISOString() } as typeof emp;
+  const updated = { ...emp, ...(safeBody as Partial<typeof emp>), ...inactiveFields, id, email: newEmail, updatedAt: new Date().toISOString() } as typeof emp;
   updated.completion = calcCompletion(updated);
   saveEmployee(updated);
   return NextResponse.json(updated);

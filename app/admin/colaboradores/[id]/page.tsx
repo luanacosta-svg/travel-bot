@@ -173,6 +173,8 @@ export default function ColaboradorDetailPage() {
   const [showLembrete,    setShowLembrete]    = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting,        setResetting]        = useState(false);
+  const [showInactiveConfirm, setShowInactiveConfirm] = useState(false);
+  const [togglingActive,      setTogglingActive]      = useState(false);
   const [toast,            setToast]            = useState<{ msg: string; ok: boolean } | null>(null);
   // Campos sensíveis revelados (apenas para controle local de UI — o audit já foi enviado)
   const [_revealed, setRevealed] = useState<Set<string>>(new Set());
@@ -197,6 +199,32 @@ export default function ColaboradorDetailPage() {
     } finally {
       setResetting(false);
       setShowResetConfirm(false);
+    }
+  }
+
+  async function toggleActive() {
+    if (!emp) return;
+    setTogglingActive(true);
+    try {
+      const res = await fetch(`/api/employees/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inactive: !emp.inactive }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setEmp(updated);
+        showToast(updated.inactive
+          ? "Colaborador desativado — o acesso foi bloqueado."
+          : "Colaborador reativado — o acesso foi liberado.", true);
+      } else {
+        showToast("Erro ao alterar o status.", false);
+      }
+    } catch {
+      showToast("Erro de conexão.", false);
+    } finally {
+      setTogglingActive(false);
+      setShowInactiveConfirm(false);
     }
   }
 
@@ -297,6 +325,11 @@ export default function ColaboradorDetailPage() {
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-0.5">{emp.name}</h1>
                 <p className="text-sm text-slate-500 mb-3">{emp.role ?? "—"} · {emp.squad ?? "—"}</p>
                 <div className="flex flex-wrap gap-2">
+                  {emp.inactive && (
+                    <span className="pill text-xs bg-red-100 text-red-700 font-bold">
+                      ⛔ Inativo{emp.inactivatedAt ? ` desde ${formatBR(emp.inactivatedAt.slice(0, 10))}` : ""}
+                    </span>
+                  )}
                   <span className="pill pill--orange text-xs">📧 {emp.email}</span>
                   {emp.phone && <span className="pill pill--slate text-xs">📱 {emp.phone}</span>}
                   <span className={`pill text-xs ${comp >= 100 ? "pill--green" : "pill--amber"}`}>
@@ -318,6 +351,16 @@ export default function ColaboradorDetailPage() {
               >
                 🔑 Resetar senha
               </button>
+              <button
+                onClick={() => setShowInactiveConfirm(true)}
+                className={`text-sm font-semibold px-4 py-2 rounded-xl transition border ${
+                  emp.inactive
+                    ? "border-green-200 text-green-700 hover:border-green-400 hover:bg-green-50"
+                    : "border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-600"
+                }`}
+              >
+                {emp.inactive ? "✅ Reativar" : "⛔ Desativar"}
+              </button>
               <a
                 href={`/admin/colaboradores/${id}/editar`}
                 className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition"
@@ -325,6 +368,41 @@ export default function ColaboradorDetailPage() {
                 ✏️ Editar
               </a>
             </div>
+
+            {/* Modal confirmação desativar/reativar */}
+            {showInactiveConfirm && emp && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+                  <h2 className="font-extrabold text-slate-900 text-lg">
+                    {emp.inactive ? "Reativar colaborador" : "Desativar colaborador"}
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    {emp.inactive ? (
+                      <>Reativar <strong>{emp.name}</strong>? O acesso ao 49Pay volta a funcionar com o mesmo e-mail e senha.</>
+                    ) : (
+                      <>Desativar <strong>{emp.name}</strong>? O login será bloqueado imediatamente. O cadastro, as NFs e os reembolsos ficam guardados — dá pra reativar depois.</>
+                    )}
+                  </p>
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      onClick={() => setShowInactiveConfirm(false)}
+                      className="flex-1 text-sm border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-xl hover:border-slate-300 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={toggleActive}
+                      disabled={togglingActive}
+                      className={`flex-1 text-sm text-white font-bold px-4 py-2.5 rounded-xl transition disabled:opacity-50 ${
+                        emp.inactive ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600"
+                      }`}
+                    >
+                      {togglingActive ? "Salvando..." : emp.inactive ? "Reativar" : "Desativar"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Modal confirmação reset */}
             {showResetConfirm && emp && (
